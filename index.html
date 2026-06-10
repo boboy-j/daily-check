@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="每日打卡">
+  <meta name="theme-color" content="#007AFF">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="manifest" href="manifest.json">
+  <link rel="mask-icon" href="icon.svg" color="#007AFF">
+  <title>每日打卡</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- ====== iOS 导航栏 ====== -->
+    <header id="appHeader">
+      <button id="navBack" class="nav-back" style="display:none;" onclick="goBack()">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>返回</span>
+      </button>
+      <h1 id="navTitle">每日打卡</h1>
+      <div id="navRight"></div>
+    </header>
+
+    <!-- ====== 页面容器 ====== -->
+    <main id="pageContainer">
+
+      <!-- 礼花 Canvas -->
+      <canvas id="confettiCanvas"></canvas>
+
+      <!-- 页面1: 成员列表 -->
+      <section id="pageMembers" class="page active">
+        <div class="member-grid" id="memberGrid"></div>
+        <div class="empty-state" id="emptyMembers">
+          <div class="empty-icon">👨‍👩‍👧‍👦</div>
+          <p>还没有家庭成员<br>快来添加吧！</p>
+        </div>
+        <div class="ios-fab">
+          <button class="ios-fab-btn" onclick="showAddMember()">
+            <svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.5" stroke-linecap="round" fill="none"/></svg>
+          </button>
+        </div>
+      </section>
+
+      <!-- 页面2: 打卡主页 -->
+      <section id="pageDashboard" class="page">
+        <div id="dashboardHeader" class="dashboard-header"></div>
+        <div class="date-nav">
+          <button class="date-arrow" onclick="changeDate(-1)">
+            <svg viewBox="0 0 24 24" width="20" height="20"><path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <span id="currentDate"></span>
+          <button class="date-arrow" onclick="changeDate(1)">
+            <svg viewBox="0 0 24 24" width="20" height="20"><path d="M9 18l6-6-6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button id="btnToday" class="btn-today" onclick="goToday()">今天</button>
+        </div>
+        <div class="progress-summary" id="progressSummary"></div>
+        <div class="task-list" id="taskList"></div>
+        <div class="dashboard-actions">
+          <button class="btn btn-outline" onclick="showTaskManager()">
+            <svg viewBox="0 0 24 24" width="16" height="16" style="vertical-align:-2px;margin-right:4px"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2M9 5h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            管理任务
+          </button>
+        </div>
+      </section>
+
+      <!-- 页面3: 任务管理 -->
+      <section id="pageTasks" class="page">
+        <div class="task-manager">
+          <div class="add-task-row">
+            <input type="text" id="taskInput" placeholder="新任务名称" maxlength="20">
+            <div class="duration-input-group">
+              <input type="number" id="taskDuration" min="0" max="999" value="0" class="duration-input">
+              <span class="duration-label">分钟</span>
+            </div>
+            <button class="btn btn-primary" onclick="addTask()">添加</button>
+          </div>
+          <div class="task-manager-list" id="taskManagerList"></div>
+        </div>
+      </section>
+
+      <!-- 页面4: 统计分析 -->
+      <section id="pageStats" class="page">
+        <div class="stats-controls">
+          <select id="statsMemberSelect" onchange="renderStats()">
+            <option value="all">全部成员</option>
+          </select>
+          <select id="statsPeriod" onchange="renderStats()">
+            <option value="7">近7天</option>
+            <option value="30" selected>近30天</option>
+            <option value="90">近90天</option>
+          </select>
+        </div>
+        <div id="statsContent"></div>
+      </section>
+
+      <!-- 页面5: 添加成员（iOS 模态弹窗） -->
+      <section id="pageAddMember" class="page page-modal">
+        <div class="modal-handle"></div>
+        <div class="add-member-form">
+          <h2 class="add-member-title">添加成员</h2>
+          <div class="avatar-selector" id="avatarSelector">
+            <div class="avatar-option selected" data-avatar="😊">😊</div>
+            <div class="avatar-option" data-avatar="😎">😎</div>
+            <div class="avatar-option" data-avatar="🤗">🤗</div>
+            <div class="avatar-option" data-avatar="😺">😺</div>
+            <div class="avatar-option" data-avatar="🐶">🐶</div>
+            <div class="avatar-option" data-avatar="🐰">🐰</div>
+            <div class="avatar-option" data-avatar="🐼">🐼</div>
+            <div class="avatar-option" data-avatar="🦊">🦊</div>
+            <div class="avatar-option" data-avatar="🐸">🐸</div>
+            <div class="avatar-option" data-avatar="🌈">🌈</div>
+            <div class="avatar-option" data-avatar="🌟">🌟</div>
+            <div class="avatar-option" data-avatar="🌸">🌸</div>
+          </div>
+          <input type="text" id="memberNameInput" placeholder="输入名称" maxlength="8">
+          <div class="form-buttons">
+            <button class="btn btn-primary" onclick="saveMember()">保存</button>
+            <button class="btn btn-outline" onclick="goBack()">取消</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ====== iOS Tab Bar ====== -->
+    <div id="tabBar" class="tab-bar">
+      <button class="tab-item active" data-page="pageMembers" onclick="switchTab('pageMembers')">
+        <span class="tab-icon-wrapper">
+          <svg viewBox="0 0 24 24" width="24" height="24" class="tab-icon"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="9" cy="7" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span class="tab-badge" id="memberBadge">0</span>
+        </span>
+        <span class="tab-label">成员</span>
+      </button>
+      <button class="tab-item" data-page="pageStats" onclick="switchTab('pageStats')">
+        <span class="tab-icon-wrapper">
+          <svg viewBox="0 0 24 24" width="24" height="24" class="tab-icon"><path d="M18 20V10M12 20V4M6 20v-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </span>
+        <span class="tab-label">统计</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast"></div>
+
+  <!-- 倒计时覆盖层 -->
+  <div id="timerOverlay" class="timer-overlay" style="display:none;">
+    <div class="timer-container">
+      <div class="timer-task-name" id="timerTaskName">📖 阅读</div>
+      <div class="timer-circle" id="timerCircle">
+        <svg viewBox="0 0 220 220" class="timer-svg">
+          <circle cx="110" cy="110" r="100" class="timer-bg-circle"/>
+          <circle cx="110" cy="110" r="100" class="timer-progress-circle" id="timerProgressCircle"
+                  stroke-dasharray="628.32" stroke-dashoffset="0"/>
+        </svg>
+        <div class="timer-time" id="timerDisplay">00:00</div>
+      </div>
+      <div class="timer-controls">
+        <button class="timer-btn timer-btn-primary" id="timerMainBtn" onclick="timerMainAction()">▶ 开始</button>
+        <button class="timer-btn timer-btn-outline" onclick="stopTimer()">✕ 取消</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,1273 @@
+/* ===== 📱 每日打卡 · iOS 原生风格 ===== */
+
+/* 去除 iOS 点击高亮 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+  /* iOS 系统色 */
+  --blue: #007AFF;
+  --blue-dark: #0055CC;
+  --blue-light: #E8F0FE;
+  --green: #34C759;
+  --green-light: #E8F8ED;
+  --green-dark: #248A3D;
+  --red: #FF3B30;
+  --red-light: #FFF0EF;
+  --orange: #FF9500;
+  --yellow: #FFCC00;
+
+  /* iOS 背景色 */
+  --bg: #F2F2F7;
+  --bg-card: #FFFFFF;
+  --bg-secondary: #E5E5EA;
+
+  /* iOS 文字色 */
+  --text: #1C1C1E;
+  --text-secondary: #3C3C43;
+  --text-tertiary: #8E8E93;
+
+  /* iOS 分隔线 */
+  --separator: #C6C6C8;
+  --separator-light: #E5E5EA;
+
+  /* 导航栏 / Tab栏 */
+  --nav-h: 44px;
+  --tab-h: 50px;
+
+  /* Safe Area（JS 动态注入） */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ===== 应用容器 ===== */
+#app {
+  max-width: 480px;
+  margin: 0 auto;
+  height: 100vh;
+  height: -webkit-fill-available;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* ===== iOS 状态栏占位（主屏幕全屏时） ===== */
+#app::before {
+  content: '';
+  display: block;
+  height: var(--safe-top);
+  flex-shrink: 0;
+  background: var(--bg-card);
+}
+
+/* ===== 顶部导航栏（iOS 风格） ===== */
+#appHeader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--nav-h);
+  padding: 0 16px;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+  border-bottom: 0.5px solid var(--separator-light);
+}
+
+#appHeader h1 {
+  font-size: 17px;
+  font-weight: 600;
+  flex: 1;
+  text-align: center;
+  color: var(--text);
+  letter-spacing: 0.3px;
+}
+
+/* iOS 返回按钮 */
+.nav-back {
+  display: none;
+  align-items: center;
+  gap: 2px;
+  background: none;
+  border: none;
+  color: var(--blue);
+  font-size: 17px;
+  font-weight: 400;
+  cursor: pointer;
+  padding: 0;
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+}
+.nav-back svg {
+  width: 22px;
+  height: 22px;
+}
+.nav-back span {
+  font-size: 17px;
+}
+
+#navRight {
+  width: 50px;
+  height: 44px;
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* ===== 页面容器 ===== */
+#pageContainer {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.page {
+  display: none;
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 16px 20px;
+  background: var(--bg);
+}
+
+.page.active {
+  display: block;
+}
+
+/* iOS 模态页面（从底部滑入） */
+.page-modal {
+  z-index: 20;
+  background: var(--bg);
+  animation: iosModalIn 0.35s cubic-bezier(0.32, 0.08, 0.24, 1);
+}
+
+@keyframes iosModalIn {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+/* 拖拽指示条 */
+.modal-handle {
+  width: 36px;
+  height: 5px;
+  background: var(--separator);
+  border-radius: 3px;
+  margin: 8px auto 4px;
+}
+
+/* ===== 礼花 Canvas ====== */
+#confettiCanvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 999;
+  display: none;
+}
+#confettiCanvas.active {
+  display: block;
+}
+
+/* ===== iOS Tab Bar ===== */
+.tab-bar {
+  display: flex;
+  height: calc(var(--tab-h) + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  flex-shrink: 0;
+  border-top: 0.5px solid var(--separator-light);
+  z-index: 10;
+}
+
+.tab-bar.hidden {
+  display: none;
+}
+
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 4px 0 2px;
+  transition: color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tab-item.active {
+  color: var(--blue);
+}
+
+.tab-icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+}
+
+.tab-icon {
+  width: 25px;
+  height: 25px;
+}
+
+.tab-badge {
+  position: absolute;
+  top: -2px;
+  right: -6px;
+  background: var(--red);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  min-width: 18px;
+  height: 18px;
+  line-height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  text-align: center;
+  font-family: -apple-system, sans-serif;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.tab-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+}
+
+/* ===== 空状态 ===== */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  color: var(--text-tertiary);
+  gap: 12px;
+}
+.empty-state .empty-icon {
+  font-size: 64px;
+  opacity: 0.5;
+}
+.empty-state p {
+  font-size: 15px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* ===== 成员网格（iOS Collection 风格） ===== */
+.member-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.member-card {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 20px 8px 14px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  user-select: none;
+}
+
+.member-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+.member-card:active {
+  transform: scale(0.96);
+  opacity: 0.8;
+}
+
+.member-card .avatar {
+  font-size: 40px;
+  display: block;
+  margin-bottom: 8px;
+  line-height: 1.2;
+}
+.member-card .name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.member-card .progress-badge {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  background: var(--bg);
+  padding: 2px 10px;
+  border-radius: 10px;
+  display: inline-block;
+}
+.member-card .delete-btn {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  color: var(--red);
+  border: 1.5px solid var(--separator-light);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+.member-card:hover .delete-btn {
+  display: flex;
+}
+.member-card .delete-btn:hover {
+  background: var(--red);
+  color: #fff;
+}
+
+/* ===== iOS FAB（圆角按钮，非圆形悬浮） ===== */
+.ios-fab {
+  position: fixed;
+  right: 20px;
+  bottom: calc(var(--tab-h) + var(--safe-bottom) + 20px);
+  z-index: 20;
+}
+
+.ios-fab-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--blue);
+  border: none;
+  box-shadow: 0 4px 16px rgba(0,122,255,0.3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  color: #fff;
+}
+.ios-fab-btn:active {
+  transform: scale(0.88);
+  box-shadow: 0 2px 8px rgba(0,122,255,0.2);
+}
+
+/* ===== 打卡主页头部 ===== */
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0 12px;
+}
+.dashboard-header .avatar {
+  font-size: 40px;
+  line-height: 1;
+}
+.dashboard-header .info {
+  flex: 1;
+}
+.dashboard-header .info .name {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+}
+.dashboard-header .info .sub {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+/* ===== 日期导航（iOS 分段控件风格） ===== */
+.date-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 4px 0 14px;
+  border-bottom: 0.5px solid var(--separator-light);
+  margin-bottom: 14px;
+}
+.date-nav button {
+  background: none;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  color: var(--blue);
+}
+.date-nav button:hover {
+  background: var(--blue-light);
+}
+.date-nav button:active {
+  background: var(--blue-light);
+  transform: scale(0.9);
+}
+#currentDate {
+  font-size: 15px;
+  font-weight: 600;
+  min-width: 130px;
+  text-align: center;
+  color: var(--text);
+  letter-spacing: 0.5px;
+}
+.btn-today {
+  font-size: 13px !important;
+  width: auto !important;
+  padding: 4px 14px !important;
+  border-radius: 14px !important;
+  background: var(--blue) !important;
+  color: #fff !important;
+  border: none !important;
+  font-weight: 500 !important;
+  height: 28px !important;
+}
+.btn-today:active {
+  opacity: 0.7 !important;
+}
+
+/* ===== 进度总览（iOS Summary Card） ===== */
+.progress-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--bg-card);
+  border-radius: 12px;
+  margin-bottom: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.progress-summary .progress-label {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  font-weight: 500;
+}
+.progress-summary .progress-bar-wrap {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-secondary);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.progress-summary .progress-bar-fill {
+  height: 100%;
+  background: var(--green);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+  min-width: 2%;
+}
+.progress-summary .progress-num {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  min-width: 40px;
+  text-align: right;
+}
+
+/* ===== 任务列表（iOS TableView 风格） ===== */
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: var(--bg-card);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--bg-card);
+  transition: all 0.2s ease;
+  border-bottom: 0.5px solid var(--separator-light);
+}
+.task-item:last-child {
+  border-bottom: none;
+}
+.task-item:active {
+  background: var(--bg);
+}
+.task-item.completed {
+  background: var(--green-light);
+}
+
+.task-item .task-icon {
+  font-size: 20px;
+  width: 28px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.task-item .task-name {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--text);
+}
+.task-item.completed .task-name {
+  color: var(--text-tertiary);
+  text-decoration: line-through;
+  text-decoration-color: var(--text-tertiary);
+}
+
+/* iOS Switch 风格勾选按钮 */
+.task-item .check-btn {
+  width: 51px;
+  height: 31px;
+  border-radius: 16px;
+  border: none;
+  background: var(--bg-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 2px;
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+  position: relative;
+}
+.task-item .check-btn::after {
+  content: '';
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  transition: transform 0.25s ease;
+  position: absolute;
+  left: 2px;
+  top: 2px;
+}
+.task-item.completed .check-btn {
+  background: var(--green);
+}
+.task-item.completed .check-btn::after {
+  transform: translateX(20px);
+  background: #fff;
+}
+.task-item .check-btn:active::after {
+  width: 31px;
+}
+
+/* 计时任务标记（iOS 标签风格） */
+.task-item .task-timer-badge {
+  font-size: 12px;
+  color: var(--blue);
+  background: var(--blue-light);
+  padding: 2px 10px;
+  border-radius: 12px;
+  margin-left: auto;
+  margin-right: 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-weight: 500;
+}
+
+.dashboard-actions {
+  margin-top: 20px;
+  text-align: center;
+}
+
+/* ===== iOS 风格按钮 ===== */
+.btn {
+  padding: 8px 20px;
+  border-radius: 10px;
+  border: none;
+  background: var(--bg-secondary);
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: -apple-system, sans-serif;
+}
+.btn:active {
+  opacity: 0.6;
+}
+.btn-primary {
+  background: var(--blue);
+  color: #fff;
+}
+.btn-primary:active {
+  background: var(--blue-dark);
+}
+.btn-outline {
+  background: transparent;
+  color: var(--blue);
+  border: 1.5px solid var(--blue);
+}
+.btn-outline:active {
+  background: var(--blue-light);
+}
+.btn-danger {
+  background: var(--red);
+  color: #fff;
+}
+.btn-danger:active {
+  background: #D62D20;
+}
+.btn-sm {
+  padding: 4px 12px;
+  font-size: 13px;
+}
+
+/* ===== 任务管理 ===== */
+.task-manager {
+  padding-top: 12px;
+}
+
+.add-task-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.add-task-row input {
+  flex: 1;
+  height: 40px;
+  padding: 0 14px;
+  border: 1.5px solid var(--separator-light);
+  border-radius: 10px;
+  font-size: 16px;
+  outline: none;
+  transition: border 0.2s;
+  background: var(--bg-card);
+  font-family: -apple-system, sans-serif;
+  color: var(--text);
+}
+.add-task-row input:focus {
+  border-color: var(--blue);
+}
+
+.duration-input-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--separator-light);
+  border-radius: 10px;
+  padding: 0 10px;
+  flex-shrink: 0;
+  height: 40px;
+}
+.duration-input-group:focus-within {
+  border-color: var(--blue);
+}
+.duration-input {
+  width: 40px;
+  border: none;
+  outline: none;
+  padding: 0;
+  font-size: 16px;
+  text-align: center;
+  background: transparent;
+  font-family: -apple-system, sans-serif;
+  color: var(--text);
+}
+.duration-label {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+.task-manager-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: var(--bg-card);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.task-mgr-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 16px;
+  background: var(--bg-card);
+  border-bottom: 0.5px solid var(--separator-light);
+  transition: background 0.2s;
+}
+.task-mgr-item:last-child {
+  border-bottom: none;
+}
+.task-mgr-item:active {
+  background: var(--bg);
+}
+.task-mgr-item .task-icon {
+  font-size: 18px;
+}
+.task-mgr-item .task-mgr-name {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--text);
+}
+.task-mgr-item .task-count {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-right: 4px;
+}
+.task-mgr-item .task-timer-badge {
+  font-size: 12px;
+  color: var(--blue);
+  background: var(--blue-light);
+  padding: 2px 10px;
+  border-radius: 12px;
+  margin-left: auto;
+  margin-right: 8px;
+  white-space: nowrap;
+  font-weight: 500;
+}
+.task-mgr-item .del-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.task-mgr-item .del-btn:active {
+  background: var(--red-light);
+  color: var(--red);
+}
+
+/* ===== 添加成员表单 ===== */
+.add-member-form {
+  max-width: 360px;
+  margin: 16px auto;
+  width: 100%;
+}
+
+.add-member-title {
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+  margin: 12px 0 20px;
+  color: var(--text);
+}
+
+.avatar-selector {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.avatar-option {
+  height: 56px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--separator-light);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.avatar-option:active {
+  transform: scale(0.92);
+  border-color: var(--blue);
+}
+.avatar-option.selected {
+  border-color: var(--blue);
+  background: var(--blue-light);
+  box-shadow: inset 0 0 0 1.5px var(--blue);
+}
+
+#memberNameInput {
+  width: 100%;
+  height: 44px;
+  padding: 0 16px;
+  border: 1.5px solid var(--separator-light);
+  border-radius: 10px;
+  font-size: 17px;
+  outline: none;
+  transition: border 0.2s;
+  background: var(--bg-card);
+  margin-bottom: 20px;
+  font-family: -apple-system, sans-serif;
+  color: var(--text);
+}
+#memberNameInput:focus {
+  border-color: var(--blue);
+}
+
+.form-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+.form-buttons .btn {
+  flex: 1;
+  max-width: 160px;
+  height: 44px;
+  font-size: 17px;
+}
+
+/* ===== 统计分析 ===== */
+.stats-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding-top: 12px;
+}
+.stats-controls select {
+  flex: 1;
+  height: 36px;
+  padding: 0 12px;
+  border: 1.5px solid var(--separator-light);
+  border-radius: 10px;
+  font-size: 15px;
+  background: var(--bg-card);
+  color: var(--text);
+  outline: none;
+  appearance: auto;
+  cursor: pointer;
+  font-family: -apple-system, sans-serif;
+}
+.stats-controls select:focus {
+  border-color: var(--blue);
+}
+
+.stats-card {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.stats-card .stats-card-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+}
+
+.stats-overview {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.stats-overview-item {
+  text-align: center;
+  padding: 14px 6px;
+  background: var(--bg);
+  border-radius: 10px;
+}
+.stats-overview-item .num {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+.stats-overview-item .label {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 4px;
+}
+
+.stats-member-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 0.5px solid var(--separator-light);
+}
+.stats-member-row:last-child {
+  border-bottom: none;
+}
+.stats-member-row .avatar {
+  font-size: 22px;
+}
+.stats-member-row .name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  min-width: 36px;
+}
+.stats-member-row .rate-bar-wrap {
+  flex: 1;
+  max-width: 100px;
+  height: 6px;
+  background: var(--bg-secondary);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.stats-member-row .rate-bar-fill {
+  height: 100%;
+  background: var(--blue);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+.stats-member-row .rate-num {
+  font-size: 13px;
+  font-weight: 500;
+  min-width: 36px;
+  text-align: right;
+  color: var(--text-tertiary);
+}
+
+/* ===== 任务完成率条形图 ===== */
+.stats-task-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 0.5px solid var(--separator-light);
+}
+.stats-task-bar:last-child {
+  border-bottom: none;
+}
+.stats-task-bar .task-label {
+  width: 64px;
+  font-size: 13px;
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+}
+.stats-task-bar .task-bar-wrap {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-secondary);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.stats-task-bar .task-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+  background: var(--blue);
+}
+.stats-task-bar .task-rate {
+  font-size: 13px;
+  font-weight: 500;
+  min-width: 36px;
+  text-align: right;
+  color: var(--text-tertiary);
+}
+
+/* ===== 热力图 ===== */
+.stats-heatmap {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+.stats-heatmap .heat-item {
+  aspect-ratio: 1;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  color: var(--text-tertiary);
+  transition: transform 0.15s;
+}
+.stats-heatmap .heat-item:active {
+  transform: scale(1.2);
+}
+.heat-empty { background: var(--bg); }
+.heat-low { background: #D6E4FF; }
+.heat-medium { background: #A0C4FF; }
+.heat-high { background: #5E9EFF; color: #fff; }
+.heat-full { background: var(--blue); color: #fff; }
+.heat-future { background: transparent; border: 1px dashed var(--separator-light); }
+
+.stats-heatmap-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 8px;
+}
+
+/* ===== Toast（iOS HUD 风格） ===== */
+.toast {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.85);
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #fff;
+  padding: 14px 28px;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 500;
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.32, 0.08, 0.24, 1);
+  pointer-events: none;
+  z-index: 100;
+  white-space: nowrap;
+  max-width: 80vw;
+  text-align: center;
+  font-family: -apple-system, sans-serif;
+}
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* ===== 滚动条美化 ===== */
+.page::-webkit-scrollbar {
+  width: 0;
+}
+
+/* ===== iOS Action Sheet 弹窗 ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: iosFadeIn 0.2s ease;
+}
+.modal-box {
+  background: var(--bg-card);
+  border-radius: 14px;
+  padding: 24px 20px 20px;
+  max-width: 280px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+  animation: iosAlertIn 0.3s cubic-bezier(0.32, 0.08, 0.24, 1);
+}
+.modal-box .modal-icon {
+  font-size: 44px;
+  margin-bottom: 12px;
+}
+.modal-box .modal-text {
+  font-size: 15px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+.modal-box .modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+.modal-box .modal-actions .btn {
+  flex: 1;
+  max-width: 120px;
+  height: 40px;
+  font-size: 15px;
+  border-radius: 10px;
+}
+@keyframes iosFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes iosAlertIn {
+  from { transform: scale(1.1); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* ===== 倒计时覆盖层（iOS 风格） ===== */
+.timer-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: iosFadeIn 0.2s ease;
+}
+.timer-container {
+  background: var(--bg-card);
+  border-radius: 18px;
+  padding: 32px 24px 24px;
+  width: 300px;
+  max-width: 85vw;
+  text-align: center;
+  box-shadow: 0 8px 48px rgba(0,0,0,0.15);
+  animation: iosAlertIn 0.3s cubic-bezier(0.32, 0.08, 0.24, 1);
+}
+.timer-task-name {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.timer-circle {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  margin: 0 auto 20px;
+}
+.timer-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.timer-bg-circle {
+  fill: none;
+  stroke: var(--bg-secondary);
+  stroke-width: 8;
+}
+.timer-progress-circle {
+  fill: none;
+  stroke: var(--blue);
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.3s linear;
+}
+.timer-progress-circle.completed {
+  stroke: var(--green);
+}
+.timer-time {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 44px;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 2px;
+  font-family: -apple-system, sans-serif;
+}
+.timer-controls {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+.timer-btn {
+  height: 44px;
+  padding: 0 24px;
+  border-radius: 12px;
+  border: none;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: -apple-system, sans-serif;
+}
+.timer-btn-primary {
+  background: var(--blue);
+  color: #fff;
+  min-width: 100px;
+}
+.timer-btn-primary:active {
+  background: var(--blue-dark);
+}
+.timer-btn-outline {
+  background: transparent;
+  color: var(--text-tertiary);
+  border: 1.5px solid var(--separator-light);
+}
+.timer-btn-outline:active {
+  background: var(--bg);
+}
+
+/* ===== 响应式 ===== */
+@media (max-width: 420px) {
+  .member-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .stats-overview {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .stats-overview-item .num {
+    font-size: 24px;
+  }
+  .avatar-selector {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .stats-task-bar .task-label {
+    width: 52px;
+    font-size: 12px;
+  }
+  .page {
+    padding: 0 14px 16px;
+  }
+  .timer-circle {
+    width: 160px;
+    height: 160px;
+  }
+  .timer-time {
+    font-size: 36px;
+  }
+  .timer-container {
+    padding: 24px 16px 20px;
+  }
+}
+
+@media (min-width: 421px) {
+  .member-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
