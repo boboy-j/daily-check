@@ -149,6 +149,7 @@ html, body {
   position: absolute;
   inset: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   padding: 0 16px 20px;
   background: var(--bg);
@@ -692,14 +693,11 @@ html, body {
   border-color: var(--blue);
 }
 .add-task-row .duration-input-group {
-  width: 88px;
-  flex-shrink: 0;
+  flex: 0 0 auto;
 }
 .add-task-row .btn-primary {
-  width: 66px;
-  flex-shrink: 0;
-  padding: 8px 0;
-  text-align: center;
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .duration-input-group {
