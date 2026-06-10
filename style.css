@@ -669,18 +669,16 @@ html, body {
 
 .add-task-row {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
   margin-bottom: 16px;
-}
-.add-task-row .task-input-wrap {
-  flex: 1 1 100%;
-  min-width: 0;
+  flex-wrap: nowrap;
 }
 .add-task-row #taskInput {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   height: 40px;
-  padding: 0 14px;
+  padding: 0 12px;
   border: 1.5px solid var(--separator-light);
   border-radius: 10px;
   font-size: 16px;
@@ -693,37 +691,40 @@ html, body {
 .add-task-row #taskInput:focus {
   border-color: var(--blue);
 }
-.add-task-row .actions-wrap {
-  display: flex;
-  gap: 8px;
-  flex: 1;
-  min-width: 0;
+.add-task-row .duration-input-group {
+  width: 88px;
+  flex-shrink: 0;
+}
+.add-task-row .btn-primary {
+  width: 66px;
+  flex-shrink: 0;
+  padding: 8px 0;
+  text-align: center;
 }
 
 .duration-input-group {
   display: flex;
   align-items: center;
   gap: 4px;
-  background: var(--bg-card);
-  border: 1.5px solid var(--separator-light);
-  border-radius: 10px;
-  padding: 0 10px;
   flex-shrink: 0;
   height: 40px;
 }
-.duration-input-group:focus-within {
-  border-color: var(--blue);
-}
 .duration-input {
-  width: 40px;
+  width: 30px;
   border: none;
   outline: none;
   padding: 0;
   font-size: 16px;
-  text-align: center;
+  text-align: right;
   background: transparent;
   font-family: -apple-system, sans-serif;
   color: var(--text);
+  -moz-appearance: textfield;
+}
+.duration-input::-webkit-inner-spin-button,
+.duration-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 .duration-label {
   font-size: 13px;
