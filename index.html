@@ -75,12 +75,47 @@
       <section id="pageTasks" class="page">
         <div class="task-manager">
           <div class="add-task-row">
-            <input type="text" id="taskInput" placeholder="新任务名称" maxlength="20">
-            <div class="duration-input-group">
-              <input type="number" id="taskDuration" min="0" max="999" value="0" class="duration-input">
-              <span class="duration-label">分钟</span>
+            <div class="add-task-icon-row">
+              <div class="task-icon-selector" id="taskIconSelector">
+                <span class="task-icon-option selected" data-icon="📝">📝</span>
+                <span class="task-icon-option" data-icon="💪">💪</span>
+                <span class="task-icon-option" data-icon="📖">📖</span>
+                <span class="task-icon-option" data-icon="🥗">🥗</span>
+                <span class="task-icon-option" data-icon="🏃">🏃</span>
+                <span class="task-icon-option" data-icon="🧘">🧘</span>
+                <span class="task-icon-option" data-icon="🚰">🚰</span>
+                <span class="task-icon-option" data-icon="🛌">🛌</span>
+                <span class="task-icon-option" data-icon="🎯">🎯</span>
+                <span class="task-icon-option" data-icon="✍️">✍️</span>
+                <span class="task-icon-option" data-icon="🧹">🧹</span>
+                <span class="task-icon-option" data-icon="🌱">🌱</span>
+                <span class="task-icon-option" data-icon="🎨">🎨</span>
+                <span class="task-icon-option" data-icon="🎵">🎵</span>
+                <span class="task-icon-option" data-icon="💻">💻</span>
+                <span class="task-icon-option" data-icon="🧠">🧠</span>
+                <span class="task-icon-option" data-icon="❤️">❤️</span>
+                <span class="task-icon-option" data-icon="☕">☕</span>
+                <span class="task-icon-option" data-icon="🎮">🎮</span>
+                <span class="task-icon-option" data-icon="🎬">🎬</span>
+                <span class="task-icon-option" data-icon="📷">📷</span>
+                <span class="task-icon-option" data-icon="🎶">🎶</span>
+              </div>
             </div>
-            <button class="btn btn-primary" onclick="addTask()">添加</button>
+            <div class="add-task-input-row">
+              <input type="text" id="taskInput" placeholder="新任务名称" maxlength="20">
+              <div class="duration-input-group">
+                <input type="number" id="taskDuration" min="0" max="999" value="0" class="duration-input">
+                <span class="duration-label">分钟</span>
+              </div>
+              <button class="btn btn-primary" onclick="addTask()">添加</button>
+            </div>
+            <div class="add-task-type-row">
+              <span class="add-task-type-label">任务类型：</span>
+              <div class="task-type-toggle">
+                <button class="task-type-btn active" data-type="daily">每日打卡</button>
+                <button class="task-type-btn" data-type="weekly">每周打卡</button>
+              </div>
+            </div>
           </div>
           <div class="task-manager-list" id="taskManagerList"></div>
         </div>
@@ -107,18 +142,47 @@
         <div class="add-member-form">
           <h2 class="add-member-title">添加成员</h2>
           <div class="avatar-selector" id="avatarSelector">
+            <!-- 人物 -->
             <div class="avatar-option selected" data-avatar="😊">😊</div>
             <div class="avatar-option" data-avatar="😎">😎</div>
             <div class="avatar-option" data-avatar="🤗">🤗</div>
+            <div class="avatar-option" data-avatar="🥰">🥰</div>
+            <div class="avatar-option" data-avatar="😴">😴</div>
+            <div class="avatar-option" data-avatar="🤩">🤩</div>
+            <!-- 动物 -->
             <div class="avatar-option" data-avatar="😺">😺</div>
             <div class="avatar-option" data-avatar="🐶">🐶</div>
             <div class="avatar-option" data-avatar="🐰">🐰</div>
             <div class="avatar-option" data-avatar="🐼">🐼</div>
             <div class="avatar-option" data-avatar="🦊">🦊</div>
             <div class="avatar-option" data-avatar="🐸">🐸</div>
+            <div class="avatar-option" data-avatar="🐯">🐯</div>
+            <div class="avatar-option" data-avatar="🦁">🦁</div>
+            <div class="avatar-option" data-avatar="🐧">🐧</div>
+            <div class="avatar-option" data-avatar="🐨">🐨</div>
+            <div class="avatar-option" data-avatar="🦄">🦄</div>
+            <div class="avatar-option" data-avatar="🐱">🐱</div>
+            <!-- 自然 -->
             <div class="avatar-option" data-avatar="🌈">🌈</div>
             <div class="avatar-option" data-avatar="🌟">🌟</div>
             <div class="avatar-option" data-avatar="🌸">🌸</div>
+            <div class="avatar-option" data-avatar="🌻">🌻</div>
+            <div class="avatar-option" data-avatar="🍀">🍀</div>
+            <div class="avatar-option" data-avatar="🌺">🌺</div>
+            <!-- 食物 -->
+            <div class="avatar-option" data-avatar="🍎">🍎</div>
+            <div class="avatar-option" data-avatar="🍕">🍕</div>
+            <div class="avatar-option" data-avatar="🍦">🍦</div>
+            <div class="avatar-option" data-avatar="🍉">🍉</div>
+            <div class="avatar-option" data-avatar="🧁">🧁</div>
+            <div class="avatar-option" data-avatar="☕">☕</div>
+            <!-- 爱好 -->
+            <div class="avatar-option" data-avatar="🎵">🎵</div>
+            <div class="avatar-option" data-avatar="🎨">🎨</div>
+            <div class="avatar-option" data-avatar="⚽">⚽</div>
+            <div class="avatar-option" data-avatar="🎮">🎮</div>
+            <div class="avatar-option" data-avatar="📚">📚</div>
+            <div class="avatar-option" data-avatar="✈️">✈️</div>
           </div>
           <input type="text" id="memberNameInput" placeholder="输入名称" maxlength="8">
           <div class="form-buttons">

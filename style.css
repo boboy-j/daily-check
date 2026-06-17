@@ -342,31 +342,6 @@ html, body {
   border-radius: 10px;
   display: inline-block;
 }
-.member-card .delete-btn {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--bg-card);
-  color: var(--red);
-  border: 1.5px solid var(--separator-light);
-  font-size: 12px;
-  line-height: 1;
-  cursor: pointer;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 2;
-}
-.member-card:hover .delete-btn {
-  display: flex;
-}
-.member-card .delete-btn:hover {
-  background: var(--red);
-  color: #fff;
-}
 
 /* ===== iOS FAB（圆角按钮，非圆形悬浮） ===== */
 .ios-fab {
@@ -615,6 +590,42 @@ html, body {
   font-weight: 500;
 }
 
+/* 任务操作按钮组（勾选 + 计时启动） */
+.task-item .task-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* 一键完成 / 直接打卡 */
+.task-item .task-actions .check-btn {
+  flex-shrink: 0;
+}
+
+/* 计时启动按钮（⏱，仅在未完成且有时长时显示） */
+.task-item .timer-start-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid var(--blue);
+  background: var(--bg-card);
+  color: var(--blue);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  padding: 0;
+  line-height: 1;
+}
+.task-item .timer-start-btn:active {
+  background: var(--blue-light);
+  transform: scale(0.92);
+}
+
 .dashboard-actions {
   margin-top: 20px;
   text-align: center;
@@ -668,14 +679,56 @@ html, body {
   padding-top: 12px;
 }
 
+/* 图标选择器（横滚动条） */
+.add-task-icon-row {
+  margin-bottom: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.add-task-icon-row::-webkit-scrollbar { display: none; }
+
+.task-icon-selector {
+  display: flex;
+  gap: 6px;
+  padding: 4px 0;
+  flex-wrap: nowrap;
+}
+.task-icon-option {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+.task-icon-option:active {
+  transform: scale(0.88);
+}
+.task-icon-option.selected {
+  background: var(--blue-light);
+  border-color: var(--blue);
+}
+
+/* 添加任务输入行 */
 .add-task-row {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+}
+.add-task-input-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 16px;
   flex-wrap: nowrap;
 }
-.add-task-row #taskInput {
+.add-task-input-row #taskInput {
   flex: 1;
   min-width: 0;
   height: 40px;
@@ -689,15 +742,96 @@ html, body {
   font-family: -apple-system, sans-serif;
   color: var(--text);
 }
-.add-task-row #taskInput:focus {
+.add-task-input-row #taskInput:focus {
   border-color: var(--blue);
 }
-.add-task-row .duration-input-group {
+.add-task-input-row .duration-input-group {
   flex: 0 0 auto;
 }
-.add-task-row .btn-primary {
+.add-task-input-row .btn-primary {
   flex: 0 0 auto;
   white-space: nowrap;
+}
+
+/* 任务类型切换行 */
+.add-task-type-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 0.5px solid var(--separator-light);
+}
+.add-task-type-label {
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+
+/* 任务类型切换按钮组 */
+.task-type-toggle {
+  display: flex;
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 2px;
+  gap: 2px;
+}
+.task-type-btn {
+  padding: 5px 14px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: -apple-system, sans-serif;
+}
+.task-type-btn.active {
+  background: var(--bg-card);
+  color: var(--blue);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.task-type-btn:active {
+  transform: scale(0.95);
+}
+
+/* 任务类型标签（日/周角标） */
+.task-type-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+.task-type-badge.daily {
+  background: var(--blue-light);
+  color: var(--blue);
+}
+.task-type-badge.weekly {
+  background: #FFF3CD;
+  color: #856404;
+}
+
+/* 任务列表分区标签（每日 / 每周） */
+.task-section-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  padding: 16px 0 8px 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* 进度条右侧周提示 */
+.progress-weekly-hint {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-left: 6px;
+  background: var(--bg);
+  padding: 1px 8px;
+  border-radius: 8px;
 }
 
 .duration-input-group {
@@ -799,6 +933,73 @@ html, body {
   color: var(--red);
 }
 
+/* 拖拽手柄 */
+.drag-handle {
+  font-size: 16px;
+  color: var(--text-tertiary);
+  cursor: grab;
+  flex-shrink: 0;
+  padding: 4px 2px;
+  line-height: 1;
+  letter-spacing: -1px;
+  opacity: 0.5;
+  user-select: none;
+  touch-action: none;
+}
+.drag-handle:active {
+  cursor: grabbing;
+}
+.task-mgr-item.dragging {
+  opacity: 0.4;
+  background: var(--bg);
+}
+.task-mgr-item.dragging .drag-handle {
+  cursor: grabbing;
+}
+
+/* ===== 编辑任务弹窗（iOS Action Sheet 风格） ===== */
+.edit-task-modal {
+  width: 300px;
+  max-width: 88vw;
+}
+.edit-task-field {
+  margin: 10px 0;
+  text-align: left;
+}
+.edit-task-field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+.edit-task-input {
+  height: 38px;
+  padding: 0 12px;
+  border: 1.5px solid var(--separator-light);
+  border-radius: 10px;
+  font-size: 16px;
+  outline: none;
+  background: var(--bg);
+  font-family: -apple-system, sans-serif;
+  color: var(--text);
+  width: 100%;
+  box-sizing: border-box;
+}
+.edit-task-input:focus {
+  border-color: var(--blue);
+}
+.edit-icon-selector {
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+}
+.edit-icon-selector .task-icon-option {
+  width: 34px;
+  height: 34px;
+  font-size: 16px;
+}
+
 /* ===== 添加成员表单 ===== */
 .add-member-form {
   max-width: 360px;
@@ -816,12 +1017,12 @@ html, body {
 
 .avatar-selector {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
   margin-bottom: 20px;
 }
 .avatar-option {
-  height: 56px;
+  height: 48px;
   background: var(--bg-card);
   border: 1.5px solid var(--separator-light);
   border-radius: 12px;
@@ -1255,7 +1456,12 @@ html, body {
     font-size: 24px;
   }
   .avatar-selector {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+  }
+  .avatar-option {
+    height: 44px;
+    font-size: 24px;
   }
   .stats-task-bar .task-label {
     width: 52px;

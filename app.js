@@ -61,6 +61,30 @@ function todayStr() {
     String(d.getDate()).padStart(2, '0');
 }
 
+/* 获取当前周的所有日期（周一到周日） */
+function getWeekDates(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const day = d.getDay(); // 0=周日
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // 周一
+  const monday = new Date(d);
+  monday.setDate(diff);
+  const dates = [];
+  for (let i = 0; i < 7; i++) {
+    const dd = new Date(monday);
+    dd.setDate(monday.getDate() + i);
+    dates.push(dd.getFullYear() + '-' +
+      String(dd.getMonth() + 1).padStart(2, '0') + '-' +
+      String(dd.getDate()).padStart(2, '0'));
+  }
+  return dates;
+}
+
+/* 判断周任务在指定日期所在的周是否已完成 */
+function isWeeklyTaskDone(taskId, records, dateStr) {
+  const weekDates = getWeekDates(dateStr);
+  return weekDates.some(d => records[d] && records[d][taskId]);
+}
+
 function formatDateLabel(dateStr) {
   const d = new Date(dateStr + 'T00:00:00');
   const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
@@ -195,8 +219,7 @@ function renderMembers() {
     const stats = getMemberTodayStats(m.id);
     const badge = stats.total > 0 ? `${stats.completed}/${stats.total}` : '';
     return `
-      <div class="member-card" onclick="enterMember('${m.id}')">
-        <button class="delete-btn" onclick="event.stopPropagation();confirmDeleteMember('${m.id}')">✕</button>
+      <div class="member-card" data-member-id="${m.id}">
         <span class="avatar">${m.avatar || '😊'}</span>
         <div class="name">${escHtml(m.name)}</div>
         ${badge ? `<div class="progress-badge">✅ ${badge}</div>` : ''}
@@ -283,16 +306,21 @@ function renderDashboard() {
   if (!member) { goBack(); return; }
 
   // 头部
+  const tasks = loadMemberTasks(state.currentMemberId);
+  const hasWeekly = tasks.some(t => t.type === 'weekly');
   document.getElementById('dashboardHeader').innerHTML = `
     <span class="avatar">${member.avatar}</span>
     <div class="info">
       <div class="name">${escHtml(member.name)}</div>
-      <div class="sub">每天进步一点点 ✨</div>
+      <div class="sub">${hasWeekly ? '每日打卡 · 周打卡' : '每天进步一点点 ✨'}</div>
     </div>
   `;
 
-  // 日期
-  document.getElementById('currentDate').textContent = formatDateLabel(state.currentDate);
+  // 日期 / 周信息
+  const weekDates = getWeekDates(state.currentDate);
+  document.getElementById('currentDate').textContent = hasWeekly
+    ? formatDateLabel(state.currentDate) + ` (第${Math.ceil(new Date(state.currentDate + 'T00:00:00').getDate() / 7)}周)`
+    : formatDateLabel(state.currentDate);
   document.getElementById('btnToday').style.display = isToday(state.currentDate) ? 'none' : 'inline-block';
 
   // 任务列表
@@ -316,54 +344,114 @@ function renderTaskList() {
     return;
   }
 
-  // 进度
-  let completed = 0;
-  tasks.forEach(t => { if (dayRec[t.id]) completed++; });
-  const pct = Math.round((completed / tasks.length) * 100);
+  // 分类任务：每日在前，周在后
+  const dailyTasks = tasks.filter(t => t.type !== 'weekly');
+  const weeklyTasks = tasks.filter(t => t.type === 'weekly');
+
+  // 进度统计
+  let dailyDone = 0, dailyTotal = dailyTasks.length;
+  dailyTasks.forEach(t => { if (dayRec[t.id]) dailyDone++; });
+  let weeklyDone = 0, weeklyTotal = weeklyTasks.length;
+  weeklyTasks.forEach(t => { if (isWeeklyTaskDone(t.id, records, state.currentDate)) weeklyDone++; });
+
+  const totalDone = dailyDone + weeklyDone;
+  const totalAll = dailyTotal + weeklyTotal;
+  const pct = totalAll > 0 ? Math.round((totalDone / totalAll) * 100) : 0;
+
   document.getElementById('progressSummary').innerHTML = `
     <span class="progress-label">今日进度</span>
     <div class="progress-bar-wrap">
       <div class="progress-bar-fill" style="width:${pct}%"></div>
     </div>
-    <span class="progress-num">${completed}/${tasks.length}</span>
+    <span class="progress-num">${totalDone}/${totalAll}</span>
+    ${weeklyTotal > 0 ? `<span class="progress-weekly-hint">周 ${weeklyDone}/${weeklyTotal}</span>` : ''}
   `;
 
-  // 任务列表
-  const emojis = ['🌅', '💪', '📖', '🥗', '🏃', '🧘', '🚰', '🛌', '🎯', '✍️', '🧹', '🌱', '🎨', '🎵', '📝'];
-  container.innerHTML = tasks.map((t, i) => {
-    const done = !!dayRec[t.id];
-    const emoji = emojis[i % emojis.length];
-    const hasTimer = t.duration && t.duration > 0;
-    const timerLabel = hasTimer ? `⏱ ${t.duration}分钟` : '';
-    const clickHandler = hasTimer && !done
-      ? `startTimer('${t.id}', state.currentMemberId, '${escHtml(t.name)}', ${t.duration})`
-      : `toggleTask('${t.id}')`;
-    return `
-      <div class="task-item ${done ? 'completed' : ''}">
-        <span class="task-icon">${emoji}</span>
-        <span class="task-name">${escHtml(t.name)}</span>
-        ${timerLabel ? `<span class="task-timer-badge">${timerLabel}</span>` : ''}
-        <button class="check-btn" onclick="${clickHandler}">${done ? '✓' : hasTimer ? '⏱' : '○'}</button>
+  // 渲染
+  let html = '';
+  if (dailyTasks.length > 0) {
+    html += `<div class="task-section-label">每日</div>`;
+    html += dailyTasks.map(t => renderTaskItem(t, dayRec, records)).join('');
+  }
+  if (weeklyTasks.length > 0) {
+    html += `<div class="task-section-label">每周</div>`;
+    html += weeklyTasks.map(t => renderTaskItem(t, dayRec, records)).join('');
+  }
+  container.innerHTML = html;
+}
+
+/* 渲染单个任务项 */
+function renderTaskItem(t, dayRec, records) {
+  const isWeekly = t.type === 'weekly';
+  const done = isWeekly
+    ? isWeeklyTaskDone(t.id, records, state.currentDate)
+    : !!dayRec[t.id];
+  const emoji = t.icon || '📝';
+  const hasTimer = t.duration && t.duration > 0;
+  const timerLabel = hasTimer ? `⏱ ${t.duration}分钟` : '';
+  const typeBadge = isWeekly
+    ? '<span class="task-type-badge weekly">周</span>'
+    : '<span class="task-type-badge daily">日</span>';
+  return `
+    <div class="task-item ${done ? 'completed' : ''}" ondblclick="showEditTask('${t.id}')">
+      <span class="task-icon">${emoji}</span>
+      <span class="task-name">${escHtml(t.name)}</span>
+      ${typeBadge}
+      ${timerLabel ? `<span class="task-timer-badge">${timerLabel}</span>` : ''}
+      <div class="task-actions">
+        <button class="check-btn" onclick="toggleTask('${t.id}')">${done ? '✓' : '○'}</button>
+        ${hasTimer && !done ? `<button class="timer-start-btn" onclick="startTimer('${t.id}', state.currentMemberId, '${escHtml(t.name)}', ${t.duration})" title="开始倒计时">⏱</button>` : ''}
       </div>
-    `;
-  }).join('');
+    </div>
+  `;
 }
 
 function toggleTask(taskId) {
-  const records = loadMemberRecords(state.currentMemberId);
-  if (!records[state.currentDate]) records[state.currentDate] = {};
-  const dayRec = records[state.currentDate];
+  const tasks = loadMemberTasks(state.currentMemberId);
+  const task = tasks.find(t => t.id === taskId);
+  if (!task) return;
 
-  dayRec[taskId] = !dayRec[taskId];
+  const records = loadMemberRecords(state.currentMemberId);
+
+  if (task.type === 'weekly') {
+    // 周任务：整个周内只完成一次
+    const alreadyDone = isWeeklyTaskDone(taskId, records, state.currentDate);
+    if (alreadyDone) {
+      // 取消：清除本周所有该任务的记录
+      const weekDates = getWeekDates(state.currentDate);
+      weekDates.forEach(d => {
+        if (records[d] && records[d][taskId]) {
+          delete records[d][taskId];
+          if (Object.keys(records[d]).length === 0) delete records[d];
+        }
+      });
+    } else {
+      // 完成：标记在今天
+      if (!records[state.currentDate]) records[state.currentDate] = {};
+      records[state.currentDate][taskId] = true;
+    }
+  } else {
+    // 每日任务：直接切换今天的状态
+    if (!records[state.currentDate]) records[state.currentDate] = {};
+    const dayRec = records[state.currentDate];
+    dayRec[taskId] = !dayRec[taskId];
+  }
+
   saveMemberRecords(state.currentMemberId, records);
   renderTaskList();
 
   // 检测是否全部完成，触发礼花
-  if (dayRec[taskId]) {
-    const tasks = loadMemberTasks(state.currentMemberId);
+  const isDone = task.type === 'weekly'
+    ? isWeeklyTaskDone(taskId, records, state.currentDate)
+    : records[state.currentDate] && records[state.currentDate][taskId];
+
+  if (isDone) {
     let allDone = true;
     tasks.forEach(t => {
-      if (!dayRec[t.id]) allDone = false;
+      const tDone = t.type === 'weekly'
+        ? isWeeklyTaskDone(t.id, records, state.currentDate)
+        : !!(records[state.currentDate] && records[state.currentDate][t.id]);
+      if (!tDone) allDone = false;
     });
     if (allDone && tasks.length > 0) {
       launchConfetti();
@@ -386,6 +474,10 @@ function goToday() {
 }
 
 /* ===== 任务管理 ===== */
+const TASK_ICONS = ['🌅', '💪', '📖', '🥗', '🏃', '🧘', '🚰', '🛌', '🎯', '✍️', '🧹', '🌱', '🎨', '🎵', '📝', '💻', '🧠', '❤️', '☕', '🎮', '🎬', '🧘', '📷', '🎶', '🎨'];
+
+let _editTaskId = null; // 正在编辑的任务 ID
+
 function showTaskManager() {
   document.getElementById('navTitle').textContent = '📋 管理任务';
   showPage('pageTasks');
@@ -403,25 +495,38 @@ function renderTaskManager() {
     return;
   }
 
-  const emojis = ['🌅', '💪', '📖', '🥗', '🏃', '🧘', '🚰', '🛌', '🎯', '✍️', '🧹', '🌱', '🎨', '🎵', '📝'];
   container.innerHTML = tasks.map((t, i) => {
     // 统计打卡天数
     let count = 0;
     Object.keys(records).forEach(date => {
-      if (records[date][t.id]) count++;
+      if (t.type === 'weekly') {
+        // 周任务算周数
+        if (isWeeklyTaskDone(t.id, records, date)) count++;
+      } else {
+        if (records[date][t.id]) count++;
+      }
     });
-    const emoji = emojis[i % emojis.length];
+    const emoji = t.icon || '📝';
     const durLabel = t.duration && t.duration > 0 ? `⏱ ${t.duration}分钟` : '';
+    const typeLabel = t.type === 'weekly' ? '周' : '日';
+    const countLabel = t.type === 'weekly' ? `✅ ${count}周` : `✅ ${count}天`;
     return `
-      <div class="task-mgr-item">
+      <div class="task-mgr-item" draggable="true"
+           data-id="${t.id}"
+           onclick="showEditTask('${t.id}')">
+        <span class="drag-handle" onclick="event.stopPropagation()">⋮⋮</span>
         <span class="task-icon">${emoji}</span>
         <span class="task-mgr-name">${escHtml(t.name)}</span>
+        <span class="task-type-badge ${t.type === 'weekly' ? 'weekly' : 'daily'}">${typeLabel}</span>
         ${durLabel ? `<span class="task-timer-badge">${durLabel}</span>` : ''}
-        <span class="task-count">✅ ${count}天</span>
-        <button class="del-btn" onclick="deleteTask('${t.id}')">✕</button>
+        <span class="task-count">${countLabel}</span>
+        <button class="del-btn" onclick="event.stopPropagation();deleteTask('${t.id}')">✕</button>
       </div>
     `;
   }).join('');
+
+  // 拖拽排序
+  setupDragReorder(container);
 }
 
 function addTask() {
@@ -432,8 +537,16 @@ function addTask() {
   const durInput = document.getElementById('taskDuration');
   const duration = parseInt(durInput.value) || 0;
 
+  // 获取选中的图标
+  const selectedIcon = document.querySelector('.task-icon-option.selected');
+  const icon = selectedIcon ? selectedIcon.dataset.icon : '📝';
+
+  // 获取任务类型
+  const typeToggle = document.querySelector('.task-type-btn.active');
+  const type = typeToggle ? typeToggle.dataset.type : 'daily';
+
   const tasks = loadMemberTasks(state.currentMemberId);
-  tasks.push({ id: genId(), name, duration, createdAt: todayStr() });
+  tasks.push({ id: genId(), name, duration, icon, type, createdAt: todayStr() });
   saveMemberTasks(state.currentMemberId, tasks);
   input.value = '';
   durInput.value = 0;
@@ -447,6 +560,167 @@ function deleteTask(taskId) {
   saveMemberTasks(state.currentMemberId, tasks);
   renderTaskManager();
   showToast('已删除');
+}
+
+/* 显示编辑任务弹窗 */
+function showEditTask(taskId) {
+  const tasks = loadMemberTasks(state.currentMemberId);
+  const task = tasks.find(t => t.id === taskId);
+  if (!task) return;
+
+  _editTaskId = taskId;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'editTaskOverlay';
+  overlay.innerHTML = `
+    <div class="modal-box edit-task-modal">
+      <div class="modal-icon">✏️</div>
+      <div class="modal-text" style="font-size:16px;font-weight:600;">编辑任务</div>
+
+      <div class="edit-task-field">
+        <label>任务图标</label>
+        <div class="task-icon-selector edit-icon-selector">
+          ${TASK_ICONS.map(ic =>
+            `<span class="task-icon-option ${ic === task.icon ? 'selected' : ''}" data-icon="${ic}">${ic}</span>`
+          ).join('')}
+        </div>
+      </div>
+
+      <div class="edit-task-field">
+        <label>任务名称</label>
+        <input type="text" id="editTaskName" value="${escHtml(task.name)}" maxlength="20" class="edit-task-input">
+      </div>
+
+      <div class="edit-task-field">
+        <label>计时（分钟，0=无计时）</label>
+        <input type="number" id="editTaskDuration" min="0" max="999" value="${task.duration || 0}" class="edit-task-input" style="width:80px;">
+      </div>
+
+      <div class="edit-task-field">
+        <label>任务类型</label>
+        <div class="task-type-toggle">
+          <button class="task-type-btn ${task.type !== 'weekly' ? 'active' : ''}" data-type="daily">每日</button>
+          <button class="task-type-btn ${task.type === 'weekly' ? 'active' : ''}" data-type="weekly">每周</button>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="editSaveBtn">保存</button>
+        <button class="btn btn-outline" id="editCancelBtn">取消</button>
+        <button class="btn btn-danger" id="editDeleteBtn">删除</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  // 图标选择
+  overlay.querySelector('.edit-icon-selector').addEventListener('click', function(e) {
+    const opt = e.target.closest('.task-icon-option');
+    if (opt) {
+      this.querySelectorAll('.task-icon-option').forEach(el => el.classList.remove('selected'));
+      opt.classList.add('selected');
+    }
+  });
+
+  // 类型切换
+  overlay.querySelectorAll('.task-type-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      this.parentElement.querySelectorAll('.task-type-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+
+  overlay.querySelector('#editSaveBtn').onclick = () => saveEditTask(overlay);
+  overlay.querySelector('#editCancelBtn').onclick = () => overlay.remove();
+  overlay.querySelector('#editDeleteBtn').onclick = () => {
+    overlay.remove();
+    deleteTask(taskId);
+  };
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+}
+
+function saveEditTask(overlay) {
+  const taskId = _editTaskId;
+  const tasks = loadMemberTasks(state.currentMemberId);
+  const task = tasks.find(t => t.id === taskId);
+  if (!task) return;
+
+  const name = document.getElementById('editTaskName').value.trim();
+  if (!name) { showToast('请输入任务名称'); return; }
+
+  const duration = parseInt(document.getElementById('editTaskDuration').value) || 0;
+  const selectedIcon = overlay.querySelector('.edit-icon-selector .task-icon-option.selected');
+  const icon = selectedIcon ? selectedIcon.dataset.icon : '📝';
+  const typeBtn = overlay.querySelector('.task-type-btn.active');
+  const type = typeBtn ? typeBtn.dataset.type : 'daily';
+
+  task.name = name;
+  task.duration = duration;
+  task.icon = icon;
+  task.type = type;
+
+  saveMemberTasks(state.currentMemberId, tasks);
+  overlay.remove();
+  renderTaskManager();
+  showToast('✅ 任务已更新');
+}
+
+/* 拖拽排序 */
+function setupDragReorder(container) {
+  let dragEl = null;
+  let dragIndex = -1;
+
+  const onDragStart = (e) => {
+    dragEl = e.target.closest('.task-mgr-item');
+    if (!dragEl) return;
+    dragIndex = Array.from(container.children).indexOf(dragEl);
+    dragEl.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', dragEl.dataset.id);
+    // 防止进一步冒泡
+    if (e.target.closest('.del-btn')) {
+      e.preventDefault();
+      return;
+    }
+  };
+
+  const onDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const target = e.target.closest('.task-mgr-item');
+    if (!target || target === dragEl) return;
+    const rect = target.getBoundingClientRect();
+    const mid = rect.top + rect.height / 2;
+    if (e.clientY < mid) {
+      container.insertBefore(dragEl, target);
+    } else {
+      container.insertBefore(dragEl, target.nextSibling);
+    }
+  };
+
+  const onDragEnd = (e) => {
+    if (dragEl) dragEl.classList.remove('dragging');
+    // 保存新顺序
+    const items = container.querySelectorAll('.task-mgr-item');
+    const tasks = loadMemberTasks(state.currentMemberId);
+    const newOrder = [];
+    items.forEach(el => {
+      const id = el.dataset.id;
+      const t = tasks.find(t => t.id === id);
+      if (t) newOrder.push(t);
+    });
+    if (newOrder.length === tasks.length) {
+      saveMemberTasks(state.currentMemberId, newOrder);
+    }
+    dragEl = null;
+    dragIndex = -1;
+  };
+
+  container.addEventListener('dragstart', onDragStart);
+  container.addEventListener('dragover', onDragOver);
+  container.addEventListener('dragend', onDragEnd);
 }
 
 /* ===== 统计分析 ===== */
@@ -559,7 +833,8 @@ function getFamilyStreak() {
 
 function getMemberStreak(memberId) {
   const tasks = loadMemberTasks(memberId);
-  if (tasks.length === 0) return 0;
+  const dailyTasks = tasks.filter(t => t.type !== 'weekly'); // 只有每日任务影响连续打卡
+  if (dailyTasks.length === 0) return 0;
   const records = loadMemberRecords(memberId);
 
   let streak = 0;
@@ -571,8 +846,8 @@ function getMemberStreak(memberId) {
       String(d.getDate()).padStart(2, '0');
     const dayRec = records[ds] || {};
     let allDone = 0;
-    tasks.forEach(t => { if (dayRec[t.id]) allDone++; });
-    if (allDone === tasks.length && tasks.length > 0) {
+    dailyTasks.forEach(t => { if (dayRec[t.id]) allDone++; });
+    if (allDone === dailyTasks.length && dailyTasks.length > 0) {
       streak++;
       d.setDate(d.getDate() - 1);
     } else {
@@ -906,7 +1181,7 @@ function updateTimerDisplay(forceReset) {
 }
 
 function onTimerComplete() {
-  document.getElementById('timerDisplay').textContent = '🎉 完成!';
+  document.getElementById('timerDisplay').textContent = '🎉';
   document.getElementById('timerMainBtn').textContent = '✓ 完成';
   document.getElementById('timerProgressCircle').classList.add('completed');
 
@@ -920,22 +1195,29 @@ function onTimerComplete() {
   playBeep(3);
 
   // 关闭倒计时 2.5 秒后
+  const savedMemberId = timerState.memberId;
   setTimeout(() => {
     stopTimer();
-    if (state.currentMemberId === timerState.memberId) {
+    if (state.currentMemberId === savedMemberId) {
       renderDashboard();
     }
     // 检查全部完成→礼花
-    checkAllDoneAfterTimer();
+    checkAllDoneAfterTimer(savedMemberId);
   }, 2500);
 }
 
-function checkAllDoneAfterTimer() {
-  const records = loadMemberRecords(timerState.memberId);
-  const dayRec = records[todayStr()] || {};
-  const tasks = loadMemberTasks(timerState.memberId);
+function checkAllDoneAfterTimer(memberId) {
+  const records = loadMemberRecords(memberId || timerState.memberId);
+  const tasks = loadMemberTasks(memberId || timerState.memberId);
   let allDone = true;
-  tasks.forEach(t => { if (!dayRec[t.id]) allDone = false; });
+  tasks.forEach(t => {
+    if (t.type === 'weekly') {
+      if (!isWeeklyTaskDone(t.id, records, todayStr())) allDone = false;
+    } else {
+      const dayRec = records[todayStr()] || {};
+      if (!dayRec[t.id]) allDone = false;
+    }
+  });
   if (allDone && tasks.length > 0) {
     launchConfetti();
   }
@@ -1090,5 +1372,91 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   document.getElementById('memberNameInput').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') saveMember();
+  });
+
+  // 图标选择器点击
+  document.getElementById('taskIconSelector').addEventListener('click', function(e) {
+    const opt = e.target.closest('.task-icon-option');
+    if (opt) {
+      this.querySelectorAll('.task-icon-option').forEach(el => el.classList.remove('selected'));
+      opt.classList.add('selected');
+    }
+  });
+
+  // 任务类型切换
+  document.querySelectorAll('.task-type-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      this.parentElement.querySelectorAll('.task-type-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+
+  // 成员卡片：单击进入打卡，长按删除（手机 + 桌面）
+  let longPressTimer = null;
+  let longPressTriggered = false;
+  const LONG_PRESS_MS = 600;
+
+  function clearLongPress() {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+  }
+
+  document.getElementById('memberGrid').addEventListener('mousedown', function(e) {
+    const card = e.target.closest('.member-card');
+    if (!card) return;
+    const id = card.dataset.memberId;
+    if (!id) return;
+    longPressTriggered = false;
+    longPressTimer = setTimeout(() => {
+      longPressTriggered = true;
+      confirmDeleteMember(id);
+    }, LONG_PRESS_MS);
+  });
+
+  document.addEventListener('mouseup', clearLongPress);
+  document.addEventListener('mouseleave', clearLongPress);
+
+  // 触摸设备
+  document.getElementById('memberGrid').addEventListener('touchstart', function(e) {
+    const card = e.target.closest('.member-card');
+    if (!card) return;
+    const id = card.dataset.memberId;
+    if (!id) return;
+    longPressTriggered = false;
+    longPressTimer = setTimeout(() => {
+      longPressTriggered = true;
+      // 给一个轻微的震动反馈
+      if (navigator.vibrate) navigator.vibrate(20);
+      confirmDeleteMember(id);
+    }, LONG_PRESS_MS);
+  }, { passive: true });
+
+  document.getElementById('memberGrid').addEventListener('touchend', function(e) {
+    clearLongPress();
+    const card = e.target.closest('.member-card');
+    if (!card || longPressTriggered) return;
+    const id = card.dataset.memberId;
+    if (!id) return;
+    enterMember(id);
+  }, { passive: true });
+
+  document.getElementById('memberGrid').addEventListener('touchmove', function(e) {
+    clearLongPress();
+  }, { passive: true });
+
+  // 桌面点击（短按）
+  document.getElementById('memberGrid').addEventListener('click', function(e) {
+    if (longPressTriggered) {
+      longPressTriggered = false;
+      return;
+    }
+    const card = e.target.closest('.member-card');
+    if (!card) return;
+    const id = card.dataset.memberId;
+    if (!id) return;
+    clearLongPress();
+    enterMember(id);
   });
 });
