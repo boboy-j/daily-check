@@ -7,6 +7,7 @@ let state = {
   isSubPage: false,   // 是否在子页面（打卡页、任务管理、添加成员）
 };
 const STORAGE_KEY = 'dc_app_data';
+let _renderingStats = false; // renderStats 重入守卫
 
 /* ===== 数据层 ===== */
 function loadData() {
@@ -772,6 +773,7 @@ function setupDragReorder(container) {
 
 /* ===== 统计分析 ===== */
 function renderStats() {
+  if (_renderingStats) return; _renderingStats = true;
   document.getElementById('navTitle').textContent = '📊 统计分析';
 
   // 填充成员选项
@@ -787,6 +789,7 @@ function renderStats() {
 
   if (state.members.length === 0) {
     content.innerHTML = '<div class="empty-state" style="padding:60px 0;"><div class="empty-icon">📊</div><p>暂无数据，先添加家庭成员吧</p></div>';
+    _renderingStats = false;
     return;
   }
 
@@ -811,6 +814,7 @@ function renderStats() {
   html += buildCalendar(memberId === 'all' ? null : memberId, period);
 
   content.innerHTML = html;
+  _renderingStats = false;
 }
 
 /* 家庭总览 */
@@ -1470,6 +1474,10 @@ document.addEventListener('DOMContentLoaded', function() {
       this.classList.add('active');
     });
   });
+
+  // 统计页选择变更
+  document.getElementById('statsMemberSelect').addEventListener('change', renderStats);
+  document.getElementById('statsPeriod').addEventListener('change', renderStats);
 
   // 成员卡片：单击进入打卡，长按删除（手机 + 桌面）
   let longPressTimer = null;
