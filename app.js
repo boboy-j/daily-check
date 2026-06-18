@@ -444,11 +444,10 @@ function renderTaskItem(t, dayRec, records) {
     <div class="task-item ${done ? 'completed' : ''}" ondblclick="showEditTask('${t.id}')">
       <span class="task-icon">${emoji}</span>
       <span class="task-name">${escHtml(t.name)}</span>
+      ${hasTimer && !done ? `<span class="task-timer-badge clickable" onclick="startTimer('${t.id}', state.currentMemberId, '${escHtml(t.name)}', ${t.duration})">⏱ ${t.duration}分钟</span>` : ''}
       ${typeBadge}
-      ${timerLabel ? `<span class="task-timer-badge">${timerLabel}</span>` : ''}
       <div class="task-actions">
         <button class="check-btn" onclick="toggleTask('${t.id}')">${done ? '✓' : '○'}</button>
-        ${hasTimer && !done ? `<button class="timer-start-btn" onclick="startTimer('${t.id}', state.currentMemberId, '${escHtml(t.name)}', ${t.duration})" title="开始倒计时">⏱</button>` : ''}
       </div>
     </div>
   `;

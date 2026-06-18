@@ -585,11 +585,17 @@ html, body {
   background: var(--blue-light);
   padding: 2px 10px;
   border-radius: 12px;
-  margin-left: auto;
-  margin-right: 8px;
   white-space: nowrap;
   flex-shrink: 0;
   font-weight: 500;
+}
+.task-item .task-timer-badge.clickable {
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.task-item .task-timer-badge.clickable:active {
+  opacity: 0.6;
+  transform: scale(0.95);
 }
 
 /* 任务操作按钮组（勾选 + 计时启动） */
@@ -605,28 +611,6 @@ html, body {
   flex-shrink: 0;
 }
 
-/* 计时启动按钮（⏱，仅在未完成且有时长时显示） */
-.task-item .timer-start-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: 1.5px solid var(--blue);
-  background: var(--bg-card);
-  color: var(--blue);
-  font-size: 16px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-  padding: 0;
-  line-height: 1;
-}
-.task-item .timer-start-btn:active {
-  background: var(--blue-light);
-  transform: scale(0.92);
-}
 
 .dashboard-actions {
   margin-top: 20px;
