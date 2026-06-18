@@ -273,9 +273,22 @@ function getMemberTodayStats(memberId) {
   return { total: tasks.length, completed };
 }
 
+function toggleAvatarExpand() {
+  const sel = document.getElementById('avatarSelector');
+  const btn = document.getElementById('avatarExpandBtn');
+  const expanded = sel.classList.toggle('expanded');
+  btn.innerHTML = expanded
+    ? '收起 <span class="arrow-down">▼</span>'
+    : '查看更多 <span class="arrow-down">▼</span>';
+}
+
 function showAddMember() {
   document.getElementById('navTitle').textContent = '👤 添加成员';
   document.getElementById('memberNameInput').value = '';
+  // 展开时收起头像，每次都重置
+  const sel = document.getElementById('avatarSelector');
+  sel.classList.remove('expanded');
+  document.getElementById('avatarExpandBtn').innerHTML = '查看更多 <span class="arrow-down">▼</span>';
   document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
   document.querySelector('.avatar-option').classList.add('selected');
   showPage('pageAddMember');
