@@ -109,13 +109,13 @@ function showToast(msg) {
 
 /* ===== Tab 切换 ===== */
 function switchTab(pageId) {
+  const oldPage = document.querySelector('.page.active');
+  const newPage = document.getElementById(pageId);
+  if (oldPage === newPage) return;
+
   // 更新 Tab 样式
   document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
   document.querySelector(`.tab-item[data-page="${pageId}"]`).classList.add('active');
-
-  // 隐藏所有 page，显示目标 page
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById(pageId).classList.add('active');
 
   // 标题
   if (pageId === 'pageMembers') {
@@ -130,6 +130,40 @@ function switchTab(pageId) {
   state.pageStack = [];
   document.getElementById('navBack').style.display = 'none';
   document.getElementById('tabBar').classList.remove('hidden');
+
+  // 仅 Tab 主页面之间做滑入动画
+  const tabPages = ['pageMembers', 'pageStats'];
+  const oldIdx = tabPages.indexOf(oldPage?.id);
+  const newIdx = tabPages.indexOf(pageId);
+  if (oldIdx !== -1 && newIdx !== -1 && oldIdx !== newIdx) {
+    const isForward = newIdx > oldIdx; // 左滑：成员→统计
+    const inClass = isForward ? 'slide-in' : 'slide-in-reverse';
+    const outClass = isForward ? 'slide-out' : 'slide-out-reverse';
+
+    // 让两个页面同时可见
+    oldPage.style.display = 'block';
+    newPage.style.display = 'block';
+
+    // 触发动画
+    oldPage.classList.add(outClass);
+    newPage.classList.add(inClass);
+    // 移除旧页 active，让新页面 z-index 正确
+    oldPage.classList.remove('active');
+    newPage.classList.add('active');
+
+    // 动画结束后清理
+    setTimeout(() => {
+      oldPage.classList.remove('slide-out', 'slide-out-reverse', outClass);
+      newPage.classList.remove('slide-in', 'slide-in-reverse', inClass);
+      // 重置 display，CSS 控制显隐
+      oldPage.style.display = '';
+      newPage.style.display = '';
+    }, 300);
+  } else {
+    // 非 Tab 切换，直接切换
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    newPage.classList.add('active');
+  }
 }
 
 /* ===== 页面导航 ===== */
@@ -1360,6 +1394,46 @@ function animateConfetti(ctx, W, H) {
     confettiAnimId = null;
   }
 }
+
+/* ===== 滑动手势：左右切换 Tab 页面 ===== */
+let swipeState = { startX: 0, startY: 0, active: false };
+const SWIPE_THRESHOLD = 50;
+
+document.addEventListener('touchstart', function(e) {
+  if (state.isSubPage) return;
+  const touch = e.touches[0];
+  swipeState.startX = touch.clientX;
+  swipeState.startY = touch.clientY;
+  swipeState.active = false;
+}, { passive: true });
+
+document.addEventListener('touchmove', function(e) {
+  if (state.isSubPage || swipeState.startX === 0) return;
+  const dx = e.touches[0].clientX - swipeState.startX;
+  const dy = e.touches[0].clientY - swipeState.startY;
+  if (Math.abs(dx) > 20 && Math.abs(dx) > Math.abs(dy) * 1.8) {
+    swipeState.active = true;
+  }
+}, { passive: true });
+
+document.addEventListener('touchend', function(e) {
+  if (state.isSubPage || swipeState.startX === 0 || !swipeState.active) {
+    swipeState.startX = 0;
+    swipeState.startY = 0;
+    swipeState.active = false;
+    return;
+  }
+  const dx = (e.changedTouches?.[0]?.clientX || 0) - swipeState.startX;
+  const currentTab = document.querySelector('.tab-item.active')?.dataset?.page;
+  if (dx > SWIPE_THRESHOLD && currentTab === 'pageStats') {
+    switchTab('pageMembers');
+  } else if (dx < -SWIPE_THRESHOLD && currentTab === 'pageMembers') {
+    switchTab('pageStats');
+  }
+  swipeState.startX = 0;
+  swipeState.startY = 0;
+  swipeState.active = false;
+}, { passive: true });
 
 /* ===== 初始化 ===== */
 document.addEventListener('DOMContentLoaded', function() {
