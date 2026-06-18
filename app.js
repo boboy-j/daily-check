@@ -773,13 +773,6 @@ function setupDragReorder(container) {
 /* ===== 统计分析 ===== */
 function renderStats() {
   document.getElementById('navTitle').textContent = '📊 统计分析';
-  // 通过 Tab 切换时已经显示 pageStats，不需要 showPage
-  // 只确保页面可见
-  const page = document.getElementById('pageStats');
-  if (!page.classList.contains('active')) {
-    switchTab('pageStats');
-    return;
-  }
 
   // 填充成员选项
   const select = document.getElementById('statsMemberSelect');
