@@ -367,76 +367,37 @@ html, body {
   animation-timing-function: ease-in-out;
 }
 
-/* ===== 删除按钮（X，仅在抖动模式下显示） ===== */
-.member-delete-btn {
-  display: none;
-  position: absolute;
-  top: -8px;
-  left: -8px;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--red);
-  color: #fff;
-  border: 2.5px solid var(--bg-card);
-  font-size: 16px;
-  line-height: 1;
-  cursor: pointer;
-  z-index: 10;
-  align-items: center;
-  justify-content: center;
-  padding: 0 0 1px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-  transition: none;
-  /* 双重保险：非抖动模式下不可交互 */
-  pointer-events: none;
+/* ===== 成员操作栏（管理任务页底部） ===== */
+.member-actions {
+  margin-top: 24px;
+  padding: 16px 0 0;
+  border-top: 0.5px solid var(--separator);
+  display: block;
 }
-
-.member-card.jiggling .member-delete-btn {
-  display: flex;
+.member-actions-section {
+  width: 100%;
 }
-
-/* 编辑按钮（✏️，始终可见，卡片右上角） */
-.member-card .member-edit-btn {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  border-radius: 50%;
-  z-index: 2;
-  cursor: pointer;
-  pointer-events: auto;
-  opacity: 0.55;
-}
-.member-card .member-edit-btn:hover {
-  opacity: 1;
-}
-.member-card .member-edit-btn:active {
-  opacity: 1;
-  transform: scale(0.88);
-  background: var(--bg-secondary);
-}
-.member-card.jiggling .member-edit-btn {
-  display: none;
-}
-
-/* ===== 导航栏"完成"按钮 ===== */
-.nav-done-btn {
-  background: var(--blue);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 6px 14px;
+.member-actions-title {
   font-size: 14px;
   font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-  line-height: 1.3;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+  text-align: center;
+}
+.member-actions-buttons {
+  display: flex;
+  gap: 12px;
+}
+.member-actions-buttons .btn {
+  flex: 1;
+  height: 44px;
+  font-size: 15px;
+  font-weight: 500;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 
 /* ===== iOS FAB（圆角按钮，非圆形悬浮） ===== */

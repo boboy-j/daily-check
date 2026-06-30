@@ -257,8 +257,6 @@ function renderMembers() {
     const badge = stats.total > 0 ? `${stats.completed}/${stats.total}` : '';
     return `
       <div class="member-card" data-member-id="${m.id}">
-        <button class="member-edit-btn" onclick="event.stopPropagation();showEditMember('${m.id}')" title="编辑成员">✏️</button>
-        <button class="member-delete-btn" aria-label="删除">×</button>
         <span class="avatar">${m.avatar || '😊'}</span>
         <div class="name">${escHtml(m.name)}</div>
         ${badge ? `<div class="progress-badge">✅ ${badge}</div>` : ''}
@@ -373,6 +371,22 @@ function confirmDeleteMember(memberId) {
     saveData();
     renderMembers();
     showToast('已删除');
+  });
+}
+
+/* 从管理任务页删除成员（删除后返回成员列表） */
+function deleteMemberFromManager(memberId) {
+  const member = state.members.find(m => m.id === memberId);
+  if (!member) return;
+  showConfirm('确定要删除 ' + (member.avatar || '') + ' ' + member.name + ' 吗？<br>该成员的所有打卡数据将一并清除。', () => {
+    localStorage.removeItem(memberTasksKey(memberId));
+    localStorage.removeItem(memberRecordsKey(memberId));
+    state.members = state.members.filter(m => m.id !== memberId);
+    saveData();
+    renderMembers();
+    showToast('已删除');
+    // 导航回成员列表页
+    switchTab('pageMembers');
   });
 }
 
@@ -619,10 +633,16 @@ function showTaskManager() {
 function renderTaskManager() {
   const tasks = loadMemberTasks(state.currentMemberId);
   const records = loadMemberRecords(state.currentMemberId);
+  const member = state.members.find(m => m.id === state.currentMemberId);
 
   const container = document.getElementById('taskManagerList');
   if (tasks.length === 0) {
     container.innerHTML = '<div class="empty-state" style="padding:30px 0;"><p style="font-size:14px;">还没有任务，添加一个吧 📝</p></div>';
+    // 即使没有任务也渲染成员操作
+    const actionsContainer = document.getElementById('memberActions');
+    if (actionsContainer) {
+      actionsContainer.innerHTML = renderMemberActions(member);
+    }
     return;
   }
 
@@ -658,6 +678,26 @@ function renderTaskManager() {
 
   // 拖拽排序
   setupDragReorder(container);
+
+  // 成员操作按钮（渲染到独立的 memberActions 容器）
+  const actionsContainer = document.getElementById('memberActions');
+  if (actionsContainer) {
+    actionsContainer.innerHTML = renderMemberActions(member);
+  }
+}
+
+/* 渲染成员操作按钮（任务管理页底部） */
+function renderMemberActions(member) {
+  if (!member) return '';
+  return `
+    <div class="member-actions-section">
+      <div class="member-actions-title">👤 ${escHtml(member.name)}</div>
+      <div class="member-actions-buttons">
+        <button class="btn btn-outline member-action-btn" onclick="showEditMember('${member.id}')">✏️ 编辑成员</button>
+        <button class="btn btn-danger member-action-btn" onclick="deleteMemberFromManager('${member.id}')">🗑 删除成员</button>
+      </div>
+    </div>
+  `;
 }
 
 function addTask() {
@@ -854,7 +894,7 @@ function setupDragReorder(container) {
   container.addEventListener('dragend', onDragEnd);
 }
 
-/* ===== 成员网格 - iOS 抖动模式（长按抖动 + 删除 + 拖拽排序） ===== */
+/* ===== 成员网格 - 抖动模式（长按抖动 + 拖拽排序） ===== */
 let _jiggleMode = false;
 let _jiggleEnteredByTouch = false; // 由触摸长按进入，抑制后续 click
 
@@ -868,8 +908,6 @@ function setupMemberGridJiggle(container) {
   container.addEventListener('touchstart', (e) => {
     const card = e.target.closest('.member-card');
     if (!card) return;
-    // 点击 X 按钮由 click 处理，不启动任何触摸逻辑
-    if (e.target.closest('.member-delete-btn') || e.target.closest('.member-edit-btn')) return;
 
     if (_jiggleMode) {
       // 抖动模式中：直接开始拖拽
@@ -931,16 +969,14 @@ function setupMemberGridJiggle(container) {
 
     if (isDragging && dragEl) {
       endDrag();
+      exitJiggleMode();
       return;
     }
 
-    // 抖动模式下点击非卡片区域退出
+    // 抖动模式：点击退出
     if (_jiggleMode) {
-      const touch = e.changedTouches[0];
-      const target = document.elementFromPoint(touch.clientX, touch.clientY);
-      if (target && !target.closest('.member-card') && !target.closest('.member-delete-btn')) {
-        exitJiggleMode();
-      }
+      exitJiggleMode();
+      return;
     }
   });
 
@@ -982,41 +1018,6 @@ function setupMemberGridJiggle(container) {
       saveMemberOrderFromDOM();
       dragEl = null;
     }
-  });
-
-  // ===== X 删除按钮点击 =====
-  container.addEventListener('click', (e) => {
-    // 刚从长按进入抖动模式，抑制本次 click（X 按钮刚出现，坐标可能误触）
-    if (_jiggleEnteredByTouch) {
-      _jiggleEnteredByTouch = false;
-      return;
-    }
-    const btn = e.target.closest('.member-delete-btn');
-    if (!btn) return;
-    if (!_jiggleMode) return;
-    e.stopPropagation();
-    const card = btn.closest('.member-card');
-    if (!card) return;
-    const memberId = card.dataset.memberId;
-    const member = state.members.find(m => m.id === memberId);
-    if (!member) return;
-    showConfirm(
-      '确定要删除 ' + (member.avatar || '') + ' ' + member.name + ' 吗？<br>该成员的所有打卡数据将一并清除。',
-      () => {
-        localStorage.removeItem(memberTasksKey(memberId));
-        localStorage.removeItem(memberRecordsKey(memberId));
-        state.members = state.members.filter(m => m.id !== memberId);
-        saveData();
-        renderMembers();
-        if (state.members.length === 0) {
-          exitJiggleMode();
-        } else {
-          // 重新渲染后恢复抖动状态
-          document.querySelectorAll('.member-card').forEach(c => c.classList.add('jiggling'));
-        }
-        showToast('已删除');
-      }
-    );
   });
 
   // 阻止原生上下文菜单
@@ -1062,12 +1063,8 @@ function enterJiggleMode() {
   if (_jiggleMode) return;
   _jiggleMode = true;
 
-  // 卡片抖动 + 显示 X 按钮
+  // 卡片抖动
   document.querySelectorAll('.member-card').forEach(c => c.classList.add('jiggling'));
-
-  // 导航栏右上角显示"完成"按钮
-  const navRight = document.getElementById('navRight');
-  navRight.innerHTML = '<button class="nav-done-btn" onclick="exitJiggleMode()">完成</button>';
 }
 
 /** 退出抖动模式 */
@@ -1075,11 +1072,8 @@ function exitJiggleMode() {
   if (!_jiggleMode) return;
   _jiggleMode = false;
 
-  // 停止抖动 + 隐藏 X 按钮
+  // 停止抖动
   document.querySelectorAll('.member-card').forEach(c => c.classList.remove('jiggling'));
-
-  // 恢复导航栏
-  document.getElementById('navRight').innerHTML = '';
 }
 
 /* ===== 统计分析 ===== */
@@ -1793,11 +1787,12 @@ document.addEventListener('DOMContentLoaded', function() {
   // 成员卡片：单击进入打卡
   document.getElementById('memberGrid').addEventListener('click', function(e) {
     // 刚从长按进入抖动模式，抑制本次 click
-    // 不清空标志，留给 X 按钮处理器去清空
-    if (_jiggleEnteredByTouch) return;
+    if (_jiggleEnteredByTouch) {
+      _jiggleEnteredByTouch = false;
+      return;
+    }
     // 抖动模式下不进入详情
     if (_jiggleMode) return;
-    if (e.target.closest('.member-delete-btn') || e.target.closest('.member-edit-btn')) return;
     const card = e.target.closest('.member-card');
     if (!card) return;
     const id = card.dataset.memberId;
