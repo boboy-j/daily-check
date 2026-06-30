@@ -121,128 +121,130 @@
       <section id="pageAddMember" class="page page-modal">
         <div class="modal-handle"></div>
         <div class="add-member-form">
-          <h2 class="add-member-title">添加成员</h2>
-          <input type="text" id="memberNameInput" placeholder="输入名称" maxlength="8">
-          <div class="avatar-filter" id="avatarFilter" style="display:none">
-            <span class="avatar-filter-tag active" data-category="all">全部</span>
-            <span class="avatar-filter-tag" data-category="person">人物</span>
-            <span class="avatar-filter-tag" data-category="animal">动物</span>
-            <span class="avatar-filter-tag" data-category="nature">自然</span>
-            <span class="avatar-filter-tag" data-category="food">食物</span>
-            <span class="avatar-filter-tag" data-category="hobby">爱好</span>
-            <span class="avatar-filter-tag" data-category="other">其他</span>
+          <div class="add-member-scroll">
+            <h2 class="add-member-title">添加成员</h2>
+            <input type="text" id="memberNameInput" placeholder="输入名称" maxlength="8">
+            <div class="avatar-filter" id="avatarFilter" style="display:none">
+              <span class="avatar-filter-tag active" data-category="all">全部</span>
+              <span class="avatar-filter-tag" data-category="person">人物</span>
+              <span class="avatar-filter-tag" data-category="animal">动物</span>
+              <span class="avatar-filter-tag" data-category="nature">自然</span>
+              <span class="avatar-filter-tag" data-category="food">食物</span>
+              <span class="avatar-filter-tag" data-category="hobby">爱好</span>
+              <span class="avatar-filter-tag" data-category="other">其他</span>
+            </div>
+            <div class="avatar-selector" id="avatarSelector">
+              <!-- 人物/表情 1-20 -->
+              <div class="avatar-option selected" data-avatar="😊" data-category="person">😊</div>
+              <div class="avatar-option" data-avatar="😎" data-category="person">😎</div>
+              <div class="avatar-option" data-avatar="🤗" data-category="person">🤗</div>
+              <div class="avatar-option" data-avatar="🥰" data-category="person">🥰</div>
+              <div class="avatar-option" data-avatar="😴" data-category="person">😴</div>
+              <div class="avatar-option" data-avatar="🤩" data-category="person">🤩</div>
+              <div class="avatar-option" data-avatar="😁" data-category="person">😁</div>
+              <div class="avatar-option" data-avatar="😆" data-category="person">😆</div>
+              <div class="avatar-option" data-avatar="😅" data-category="person">😅</div>
+              <div class="avatar-option" data-avatar="😂" data-category="person">😂</div>
+              <div class="avatar-option" data-avatar="🤣" data-category="person">🤣</div>
+              <div class="avatar-option" data-avatar="😜" data-category="person">😜</div>
+              <div class="avatar-option" data-avatar="😝" data-category="person">😝</div>
+              <div class="avatar-option" data-avatar="🤪" data-category="person">🤪</div>
+              <div class="avatar-option" data-avatar="😇" data-category="person">😇</div>
+              <div class="avatar-option" data-avatar="🥺" data-category="person">🥺</div>
+              <div class="avatar-option" data-avatar="😏" data-category="person">😏</div>
+              <div class="avatar-option" data-avatar="🤔" data-category="person">🤔</div>
+              <div class="avatar-option" data-avatar="😌" data-category="person">😌</div>
+              <div class="avatar-option" data-avatar="😋" data-category="person">😋</div>
+              <!-- 动物 21-40 -->
+              <div class="avatar-option" data-avatar="🐶" data-category="animal">🐶</div>
+              <div class="avatar-option" data-avatar="🐱" data-category="animal">🐱</div>
+              <div class="avatar-option" data-avatar="🐰" data-category="animal">🐰</div>
+              <div class="avatar-option" data-avatar="🐼" data-category="animal">🐼</div>
+              <div class="avatar-option" data-avatar="🦊" data-category="animal">🦊</div>
+              <div class="avatar-option" data-avatar="🐸" data-category="animal">🐸</div>
+              <div class="avatar-option" data-avatar="🐯" data-category="animal">🐯</div>
+              <div class="avatar-option" data-avatar="🦁" data-category="animal">🦁</div>
+              <div class="avatar-option" data-avatar="🐧" data-category="animal">🐧</div>
+              <div class="avatar-option" data-avatar="🐨" data-category="animal">🐨</div>
+              <div class="avatar-option" data-avatar="🦄" data-category="animal">🦄</div>
+              <div class="avatar-option" data-avatar="🐷" data-category="animal">🐷</div>
+              <div class="avatar-option" data-avatar="🐮" data-category="animal">🐮</div>
+              <div class="avatar-option" data-avatar="🐵" data-category="animal">🐵</div>
+              <div class="avatar-option" data-avatar="🐔" data-category="animal">🐔</div>
+              <div class="avatar-option" data-avatar="🐥" data-category="animal">🐥</div>
+              <div class="avatar-option" data-avatar="🐍" data-category="animal">🐍</div>
+              <div class="avatar-option" data-avatar="🐢" data-category="animal">🐢</div>
+              <div class="avatar-option" data-avatar="🐳" data-category="animal">🐳</div>
+              <div class="avatar-option" data-avatar="🐬" data-category="animal">🐬</div>
+              <!-- 自然 41-55 -->
+              <div class="avatar-option" data-avatar="🌈" data-category="nature">🌈</div>
+              <div class="avatar-option" data-avatar="🌟" data-category="nature">🌟</div>
+              <div class="avatar-option" data-avatar="🌸" data-category="nature">🌸</div>
+              <div class="avatar-option" data-avatar="🌻" data-category="nature">🌻</div>
+              <div class="avatar-option" data-avatar="🍀" data-category="nature">🍀</div>
+              <div class="avatar-option" data-avatar="🌺" data-category="nature">🌺</div>
+              <div class="avatar-option" data-avatar="🌹" data-category="nature">🌹</div>
+              <div class="avatar-option" data-avatar="🏵️" data-category="nature">🏵️</div>
+              <div class="avatar-option" data-avatar="🌼" data-category="nature">🌼</div>
+              <div class="avatar-option" data-avatar="🌷" data-category="nature">🌷</div>
+              <div class="avatar-option" data-avatar="🌿" data-category="nature">🌿</div>
+              <div class="avatar-option" data-avatar="☀️" data-category="nature">☀️</div>
+              <div class="avatar-option" data-avatar="🌙" data-category="nature">🌙</div>
+              <div class="avatar-option" data-avatar="⭐" data-category="nature">⭐</div>
+              <div class="avatar-option" data-avatar="🌊" data-category="nature">🌊</div>
+              <!-- 食物 56-70 -->
+              <div class="avatar-option" data-avatar="🍎" data-category="food">🍎</div>
+              <div class="avatar-option" data-avatar="🍕" data-category="food">🍕</div>
+              <div class="avatar-option" data-avatar="🍦" data-category="food">🍦</div>
+              <div class="avatar-option" data-avatar="🍉" data-category="food">🍉</div>
+              <div class="avatar-option" data-avatar="🧁" data-category="food">🧁</div>
+              <div class="avatar-option" data-avatar="☕" data-category="food">☕</div>
+              <div class="avatar-option" data-avatar="🍔" data-category="food">🍔</div>
+              <div class="avatar-option" data-avatar="🍟" data-category="food">🍟</div>
+              <div class="avatar-option" data-avatar="🍩" data-category="food">🍩</div>
+              <div class="avatar-option" data-avatar="🍪" data-category="food">🍪</div>
+              <div class="avatar-option" data-avatar="🍫" data-category="food">🍫</div>
+              <div class="avatar-option" data-avatar="🍭" data-category="food">🍭</div>
+              <div class="avatar-option" data-avatar="🍜" data-category="food">🍜</div>
+              <div class="avatar-option" data-avatar="🍣" data-category="food">🍣</div>
+              <div class="avatar-option" data-avatar="🥟" data-category="food">🥟</div>
+              <!-- 爱好/运动 71-85 -->
+              <div class="avatar-option" data-avatar="🎵" data-category="hobby">🎵</div>
+              <div class="avatar-option" data-avatar="🎨" data-category="hobby">🎨</div>
+              <div class="avatar-option" data-avatar="⚽" data-category="hobby">⚽</div>
+              <div class="avatar-option" data-avatar="🎮" data-category="hobby">🎮</div>
+              <div class="avatar-option" data-avatar="📚" data-category="hobby">📚</div>
+              <div class="avatar-option" data-avatar="✈️" data-category="hobby">✈️</div>
+              <div class="avatar-option" data-avatar="🏀" data-category="hobby">🏀</div>
+              <div class="avatar-option" data-avatar="🏈" data-category="hobby">🏈</div>
+              <div class="avatar-option" data-avatar="⚾" data-category="hobby">⚾</div>
+              <div class="avatar-option" data-avatar="🎾" data-category="hobby">🎾</div>
+              <div class="avatar-option" data-avatar="🏄" data-category="hobby">🏄</div>
+              <div class="avatar-option" data-avatar="🚴" data-category="hobby">🚴</div>
+              <div class="avatar-option" data-avatar="🎸" data-category="hobby">🎸</div>
+              <div class="avatar-option" data-avatar="🎹" data-category="hobby">🎹</div>
+              <div class="avatar-option" data-avatar="🏆" data-category="hobby">🏆</div>
+              <!-- 其他 86-96 -->
+              <div class="avatar-option" data-avatar="💡" data-category="other">💡</div>
+              <div class="avatar-option" data-avatar="🔮" data-category="other">🔮</div>
+              <div class="avatar-option" data-avatar="💎" data-category="other">💎</div>
+              <div class="avatar-option" data-avatar="🔑" data-category="other">🔑</div>
+              <div class="avatar-option" data-avatar="🎭" data-category="other">🎭</div>
+              <div class="avatar-option" data-avatar="🌍" data-category="other">🌍</div>
+              <div class="avatar-option" data-avatar="🎯" data-category="other">🎯</div>
+              <div class="avatar-option" data-avatar="💻" data-category="other">💻</div>
+              <div class="avatar-option" data-avatar="🧩" data-category="other">🧩</div>
+              <div class="avatar-option" data-avatar="🎰" data-category="other">🎰</div>
+              <div class="avatar-option" data-avatar="🧸" data-category="other">🧸</div>
+              <div class="avatar-option" data-avatar="🎪" data-category="other">🎪</div>
+              <div class="avatar-option" data-avatar="🎠" data-category="other">🎠</div>
+              <div class="avatar-option" data-avatar="🎡" data-category="other">🎡</div>
+              <div class="avatar-option" data-avatar="🎢" data-category="other">🎢</div>
+            </div>
+            <button type="button" class="avatar-expand-btn" id="avatarExpandBtn" onclick="toggleAvatarExpand()">
+              查看更多 <span class="arrow-down">▼</span>
+            </button>
           </div>
-          <div class="avatar-selector" id="avatarSelector">
-            <!-- 人物/表情 1-20 -->
-            <div class="avatar-option selected" data-avatar="😊" data-category="person">😊</div>
-            <div class="avatar-option" data-avatar="😎" data-category="person">😎</div>
-            <div class="avatar-option" data-avatar="🤗" data-category="person">🤗</div>
-            <div class="avatar-option" data-avatar="🥰" data-category="person">🥰</div>
-            <div class="avatar-option" data-avatar="😴" data-category="person">😴</div>
-            <div class="avatar-option" data-avatar="🤩" data-category="person">🤩</div>
-            <div class="avatar-option" data-avatar="😁" data-category="person">😁</div>
-            <div class="avatar-option" data-avatar="😆" data-category="person">😆</div>
-            <div class="avatar-option" data-avatar="😅" data-category="person">😅</div>
-            <div class="avatar-option" data-avatar="😂" data-category="person">😂</div>
-            <div class="avatar-option" data-avatar="🤣" data-category="person">🤣</div>
-            <div class="avatar-option" data-avatar="😜" data-category="person">😜</div>
-            <div class="avatar-option" data-avatar="😝" data-category="person">😝</div>
-            <div class="avatar-option" data-avatar="🤪" data-category="person">🤪</div>
-            <div class="avatar-option" data-avatar="😇" data-category="person">😇</div>
-            <div class="avatar-option" data-avatar="🥺" data-category="person">🥺</div>
-            <div class="avatar-option" data-avatar="😏" data-category="person">😏</div>
-            <div class="avatar-option" data-avatar="🤔" data-category="person">🤔</div>
-            <div class="avatar-option" data-avatar="😌" data-category="person">😌</div>
-            <div class="avatar-option" data-avatar="😋" data-category="person">😋</div>
-            <!-- 动物 21-40 -->
-            <div class="avatar-option" data-avatar="🐶" data-category="animal">🐶</div>
-            <div class="avatar-option" data-avatar="🐱" data-category="animal">🐱</div>
-            <div class="avatar-option" data-avatar="🐰" data-category="animal">🐰</div>
-            <div class="avatar-option" data-avatar="🐼" data-category="animal">🐼</div>
-            <div class="avatar-option" data-avatar="🦊" data-category="animal">🦊</div>
-            <div class="avatar-option" data-avatar="🐸" data-category="animal">🐸</div>
-            <div class="avatar-option" data-avatar="🐯" data-category="animal">🐯</div>
-            <div class="avatar-option" data-avatar="🦁" data-category="animal">🦁</div>
-            <div class="avatar-option" data-avatar="🐧" data-category="animal">🐧</div>
-            <div class="avatar-option" data-avatar="🐨" data-category="animal">🐨</div>
-            <div class="avatar-option" data-avatar="🦄" data-category="animal">🦄</div>
-            <div class="avatar-option" data-avatar="🐷" data-category="animal">🐷</div>
-            <div class="avatar-option" data-avatar="🐮" data-category="animal">🐮</div>
-            <div class="avatar-option" data-avatar="🐵" data-category="animal">🐵</div>
-            <div class="avatar-option" data-avatar="🐔" data-category="animal">🐔</div>
-            <div class="avatar-option" data-avatar="🐥" data-category="animal">🐥</div>
-            <div class="avatar-option" data-avatar="🐍" data-category="animal">🐍</div>
-            <div class="avatar-option" data-avatar="🐢" data-category="animal">🐢</div>
-            <div class="avatar-option" data-avatar="🐳" data-category="animal">🐳</div>
-            <div class="avatar-option" data-avatar="🐬" data-category="animal">🐬</div>
-            <!-- 自然 41-55 -->
-            <div class="avatar-option" data-avatar="🌈" data-category="nature">🌈</div>
-            <div class="avatar-option" data-avatar="🌟" data-category="nature">🌟</div>
-            <div class="avatar-option" data-avatar="🌸" data-category="nature">🌸</div>
-            <div class="avatar-option" data-avatar="🌻" data-category="nature">🌻</div>
-            <div class="avatar-option" data-avatar="🍀" data-category="nature">🍀</div>
-            <div class="avatar-option" data-avatar="🌺" data-category="nature">🌺</div>
-            <div class="avatar-option" data-avatar="🌹" data-category="nature">🌹</div>
-            <div class="avatar-option" data-avatar="🏵️" data-category="nature">🏵️</div>
-            <div class="avatar-option" data-avatar="🌼" data-category="nature">🌼</div>
-            <div class="avatar-option" data-avatar="🌷" data-category="nature">🌷</div>
-            <div class="avatar-option" data-avatar="🌿" data-category="nature">🌿</div>
-            <div class="avatar-option" data-avatar="☀️" data-category="nature">☀️</div>
-            <div class="avatar-option" data-avatar="🌙" data-category="nature">🌙</div>
-            <div class="avatar-option" data-avatar="⭐" data-category="nature">⭐</div>
-            <div class="avatar-option" data-avatar="🌊" data-category="nature">🌊</div>
-            <!-- 食物 56-70 -->
-            <div class="avatar-option" data-avatar="🍎" data-category="food">🍎</div>
-            <div class="avatar-option" data-avatar="🍕" data-category="food">🍕</div>
-            <div class="avatar-option" data-avatar="🍦" data-category="food">🍦</div>
-            <div class="avatar-option" data-avatar="🍉" data-category="food">🍉</div>
-            <div class="avatar-option" data-avatar="🧁" data-category="food">🧁</div>
-            <div class="avatar-option" data-avatar="☕" data-category="food">☕</div>
-            <div class="avatar-option" data-avatar="🍔" data-category="food">🍔</div>
-            <div class="avatar-option" data-avatar="🍟" data-category="food">🍟</div>
-            <div class="avatar-option" data-avatar="🍩" data-category="food">🍩</div>
-            <div class="avatar-option" data-avatar="🍪" data-category="food">🍪</div>
-            <div class="avatar-option" data-avatar="🍫" data-category="food">🍫</div>
-            <div class="avatar-option" data-avatar="🍭" data-category="food">🍭</div>
-            <div class="avatar-option" data-avatar="🍜" data-category="food">🍜</div>
-            <div class="avatar-option" data-avatar="🍣" data-category="food">🍣</div>
-            <div class="avatar-option" data-avatar="🥟" data-category="food">🥟</div>
-            <!-- 爱好/运动 71-85 -->
-            <div class="avatar-option" data-avatar="🎵" data-category="hobby">🎵</div>
-            <div class="avatar-option" data-avatar="🎨" data-category="hobby">🎨</div>
-            <div class="avatar-option" data-avatar="⚽" data-category="hobby">⚽</div>
-            <div class="avatar-option" data-avatar="🎮" data-category="hobby">🎮</div>
-            <div class="avatar-option" data-avatar="📚" data-category="hobby">📚</div>
-            <div class="avatar-option" data-avatar="✈️" data-category="hobby">✈️</div>
-            <div class="avatar-option" data-avatar="🏀" data-category="hobby">🏀</div>
-            <div class="avatar-option" data-avatar="🏈" data-category="hobby">🏈</div>
-            <div class="avatar-option" data-avatar="⚾" data-category="hobby">⚾</div>
-            <div class="avatar-option" data-avatar="🎾" data-category="hobby">🎾</div>
-            <div class="avatar-option" data-avatar="🏄" data-category="hobby">🏄</div>
-            <div class="avatar-option" data-avatar="🚴" data-category="hobby">🚴</div>
-            <div class="avatar-option" data-avatar="🎸" data-category="hobby">🎸</div>
-            <div class="avatar-option" data-avatar="🎹" data-category="hobby">🎹</div>
-            <div class="avatar-option" data-avatar="🏆" data-category="hobby">🏆</div>
-            <!-- 其他 86-100 -->
-            <div class="avatar-option" data-avatar="💡" data-category="other">💡</div>
-            <div class="avatar-option" data-avatar="🔮" data-category="other">🔮</div>
-            <div class="avatar-option" data-avatar="💎" data-category="other">💎</div>
-            <div class="avatar-option" data-avatar="🔑" data-category="other">🔑</div>
-            <div class="avatar-option" data-avatar="🎭" data-category="other">🎭</div>
-            <div class="avatar-option" data-avatar="🌍" data-category="other">🌍</div>
-            <div class="avatar-option" data-avatar="🎯" data-category="other">🎯</div>
-            <div class="avatar-option" data-avatar="💻" data-category="other">💻</div>
-            <div class="avatar-option" data-avatar="🧩" data-category="other">🧩</div>
-            <div class="avatar-option" data-avatar="🎰" data-category="other">🎰</div>
-            <div class="avatar-option" data-avatar="🧸" data-category="other">🧸</div>
-            <div class="avatar-option" data-avatar="🎪" data-category="other">🎪</div>
-            <div class="avatar-option" data-avatar="🎠" data-category="other">🎠</div>
-            <div class="avatar-option" data-avatar="🎡" data-category="other">🎡</div>
-            <div class="avatar-option" data-avatar="🎢" data-category="other">🎢</div>
-          </div>
-          <button type="button" class="avatar-expand-btn" id="avatarExpandBtn" onclick="toggleAvatarExpand()">
-            查看更多 <span class="arrow-down">▼</span>
-          </button>
           <div class="form-buttons">
             <button class="btn btn-primary" onclick="saveMember()">保存</button>
             <button class="btn btn-outline" onclick="goBack()">取消</button>
