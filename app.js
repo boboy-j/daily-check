@@ -1750,10 +1750,8 @@ document.addEventListener('DOMContentLoaded', function() {
   // 成员卡片：单击进入打卡
   document.getElementById('memberGrid').addEventListener('click', function(e) {
     // 刚从长按进入抖动模式，抑制本次 click
-    if (_jiggleEnteredByTouch) {
-      _jiggleEnteredByTouch = false;
-      return;
-    }
+    // 不清空标志，留给 X 按钮处理器去清空
+    if (_jiggleEnteredByTouch) return;
     // 抖动模式下不进入详情
     if (_jiggleMode) return;
     if (e.target.closest('.member-delete-btn')) return;
