@@ -390,6 +390,32 @@ function deleteMemberFromManager(memberId) {
   });
 }
 
+function showEditMember(memberId) {
+  const member = state.members.find(m => m.id === memberId);
+  if (!member) return;
+  state.editingMemberId = memberId;
+  document.getElementById('navTitle').textContent = '✏️ 编辑成员';
+  document.getElementById('memberNameInput').value = member.name;
+  // Reset avatar selector + filter
+  const sel = document.getElementById('avatarSelector');
+  const filter = document.getElementById('avatarFilter');
+  const btn = document.getElementById('avatarExpandBtn');
+  sel.classList.remove('expanded');
+  btn.classList.remove('expanded');
+  btn.innerHTML = '查看更多 <span class="arrow-down">▼</span>';
+  filter.style.display = 'none';
+  applyAvatarFilter('all');
+  // Select current avatar
+  document.querySelectorAll('.avatar-option').forEach(el => {
+    el.classList.toggle('selected', el.dataset.avatar === member.avatar);
+  });
+  if (!document.querySelector('.avatar-option.selected')) {
+    document.querySelector('.avatar-option').classList.add('selected');
+  }
+  showPage('pageAddMember');
+  state.pageStack.push('pageAddMember');
+}
+
 /* ===== 头像选择 ===== */
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('avatarSelector').addEventListener('click', function(e) {
@@ -661,6 +687,7 @@ function renderMemberActions(member) {
     <div class="member-actions-section">
       <div class="member-actions-title">👤 ${escHtml(member.name)}</div>
       <div class="member-actions-buttons">
+        <button class="btn btn-outline member-action-btn" onclick="showEditMember('${member.id}')">✏️ 编辑成员</button>
         <button class="btn btn-danger member-action-btn" onclick="deleteMemberFromManager('${member.id}')">🗑 删除成员</button>
       </div>
     </div>
