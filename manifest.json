@@ -9,7 +9,6 @@
   "lang": "zh-CN",
   "description": "家庭每日打卡小工具",
   "icons": [
-    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" },
-    { "src": "icon.svg", "sizes": "180x180", "type": "image/svg+xml" }
+    { "src": "icon.png", "sizes": "180x180", "type": "image/png" }
   ]
 }
