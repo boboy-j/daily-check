@@ -5,6 +5,7 @@ let state = {
   currentDate: '',
   pageStack: [],
   isSubPage: false,   // 是否在子页面（打卡页、任务管理、添加成员）
+  editingMemberId: null,
 };
 const STORAGE_KEY = 'dc_app_data';
 let _renderingStats = false; // renderStats 重入守卫
@@ -237,9 +238,7 @@ function goBack() {
 function renderMembers() {
   const grid = document.getElementById('memberGrid');
   const empty = document.getElementById('emptyMembers');
-  const list = document.getElementById('pageMembers');
 
-  // 更新 Tab Badge
   const badge = document.getElementById('memberBadge');
   badge.textContent = state.members.length;
 
@@ -250,11 +249,12 @@ function renderMembers() {
   }
   empty.style.display = 'none';
 
-  grid.innerHTML = state.members.map(m => {
+  grid.innerHTML = state.members.map((m, idx) => {
     const stats = getMemberTodayStats(m.id);
     const badge = stats.total > 0 ? `${stats.completed}/${stats.total}` : '';
     return `
-      <div class="member-card" data-member-id="${m.id}">
+      <div class="member-card" draggable="true" data-member-id="${m.id}" data-index="${idx}">
+        <span class="drag-handle" onclick="event.stopPropagation()">⋮⋮</span>
         <span class="avatar">${m.avatar || '😊'}</span>
         <div class="name">${escHtml(m.name)}</div>
         ${badge ? `<div class="progress-badge">✅ ${badge}</div>` : ''}
@@ -302,6 +302,22 @@ function saveMember() {
   const avatar = document.querySelector('.avatar-option.selected');
   const avatarEmoji = avatar ? avatar.dataset.avatar : '😊';
 
+  if (state.editingMemberId) {
+    // 编辑已有成员
+    const member = state.members.find(m => m.id === state.editingMemberId);
+    if (member) {
+      member.name = name;
+      member.avatar = avatarEmoji;
+      saveData();
+      renderMembers();
+      renderDashboard();
+      showToast('✅ 已更新');
+    }
+    state.editingMemberId = null;
+    goBack();
+    return;
+  }
+
   state.members.push({
     id: genId(),
     name,
@@ -326,6 +342,27 @@ function confirmDeleteMember(memberId) {
     renderMembers();
     showToast('已删除');
   });
+}
+
+function showEditMember(memberId) {
+  const member = state.members.find(m => m.id === memberId);
+  if (!member) return;
+  state.editingMemberId = memberId;
+  document.getElementById('navTitle').textContent = '✏️ 编辑成员';
+  document.getElementById('memberNameInput').value = member.name;
+  // Reset avatar selector
+  const sel = document.getElementById('avatarSelector');
+  sel.classList.remove('expanded');
+  document.getElementById('avatarExpandBtn').innerHTML = '查看更多 <span class="arrow-down">▼</span>';
+  // Select current avatar
+  document.querySelectorAll('.avatar-option').forEach(el => {
+    el.classList.toggle('selected', el.dataset.avatar === member.avatar);
+  });
+  if (!document.querySelector('.avatar-option.selected')) {
+    document.querySelector('.avatar-option').classList.add('selected');
+  }
+  showPage('pageAddMember');
+  state.pageStack.push('pageAddMember');
 }
 
 /* ===== 头像选择 ===== */
@@ -360,6 +397,7 @@ function renderDashboard() {
     <span class="avatar">${member.avatar}</span>
     <div class="info">
       <div class="name">${escHtml(member.name)}</div>
+      <button class="member-edit-btn" onclick="event.stopPropagation();showEditMember('${member.id}')" title="编辑成员">✏️</button>
       <div class="sub">${hasWeekly ? '每日打卡 · 周打卡' : '每天进步一点点 ✨'}</div>
     </div>
   `;
@@ -768,6 +806,126 @@ function setupDragReorder(container) {
   container.addEventListener('dragstart', onDragStart);
   container.addEventListener('dragover', onDragOver);
   container.addEventListener('dragend', onDragEnd);
+}
+
+/* ===== 成员网格拖拽排序（桌面 + 手机） ===== */
+function setupMemberGridReorder(container) {
+  let dragEl = null;
+  let dragIndex = -1;
+
+  // 桌面 HTML5 Drag
+  const onDragStart = (e) => {
+    dragEl = e.target.closest('.member-card');
+    if (!dragEl) return;
+    // 仅当从拖拽手柄开始才允许
+    if (!e.target.closest('.drag-handle')) {
+      e.preventDefault();
+      return;
+    }
+    dragIndex = Array.from(container.children).indexOf(dragEl);
+    dragEl.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', dragEl.dataset.memberId);
+  };
+
+  const onDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const target = e.target.closest('.member-card');
+    if (!target || target === dragEl) return;
+    const rect = target.getBoundingClientRect();
+    const mid = rect.top + rect.height / 2;
+    if (e.clientY < mid) {
+      container.insertBefore(dragEl, target);
+    } else {
+      container.insertBefore(dragEl, target.nextSibling);
+    }
+  };
+
+  const onDragEnd = (e) => {
+    if (dragEl) dragEl.classList.remove('dragging');
+    const items = container.querySelectorAll('.member-card');
+    const newOrder = [];
+    items.forEach(el => {
+      const id = el.dataset.memberId;
+      const m = state.members.find(m => m.id === id);
+      if (m) newOrder.push(m);
+    });
+    if (newOrder.length === state.members.length) {
+      state.members = newOrder;
+      saveData();
+    }
+    dragEl = null;
+    dragIndex = -1;
+  };
+
+  container.addEventListener('dragstart', onDragStart);
+  container.addEventListener('dragover', onDragOver);
+  container.addEventListener('dragend', onDragEnd);
+
+  // 手机触摸拖拽
+  let touchDragEl = null;
+  let touchStartY = 0;
+  let touchDragActive = false;
+  let touchLongPressTimer = null;
+
+  container.addEventListener('touchstart', (e) => {
+    const handle = e.target.closest('.drag-handle');
+    if (!handle) return;
+    touchDragEl = e.target.closest('.member-card');
+    if (!touchDragEl) return;
+    touchStartY = e.touches[0].clientY;
+    touchDragActive = false;
+    touchLongPressTimer = setTimeout(() => {
+      touchDragActive = true;
+      touchDragEl.classList.add('dragging');
+      if (navigator.vibrate) navigator.vibrate(10);
+    }, 300);
+  }, { passive: true });
+
+  container.addEventListener('touchmove', (e) => {
+    if (!touchDragActive || !touchDragEl) return;
+    e.preventDefault();
+    const y = e.touches[0].clientY;
+    const target = document.elementFromPoint(e.touches[0].clientX, y);
+    const card = target ? target.closest('.member-card') : null;
+    if (card && card !== touchDragEl) {
+      const rect = card.getBoundingClientRect();
+      const mid = rect.top + rect.height / 2;
+      if (y < mid) {
+        container.insertBefore(touchDragEl, card);
+      } else {
+        container.insertBefore(touchDragEl, card.nextSibling);
+      }
+    }
+  }, { passive: false });
+
+  container.addEventListener('touchend', (e) => {
+    clearTimeout(touchLongPressTimer);
+    if (touchDragEl) touchDragEl.classList.remove('dragging');
+    if (touchDragActive && touchDragEl) {
+      const items = container.querySelectorAll('.member-card');
+      const newOrder = [];
+      items.forEach(el => {
+        const id = el.dataset.memberId;
+        const m = state.members.find(m => m.id === id);
+        if (m) newOrder.push(m);
+      });
+      if (newOrder.length === state.members.length) {
+        state.members = newOrder;
+        saveData();
+      }
+    }
+    touchDragEl = null;
+    touchDragActive = false;
+  });
+
+  container.addEventListener('touchcancel', (e) => {
+    clearTimeout(touchLongPressTimer);
+    if (touchDragEl) touchDragEl.classList.remove('dragging');
+    touchDragEl = null;
+    touchDragActive = false;
+  });
 }
 
 /* ===== 统计分析 ===== */
@@ -1478,72 +1636,17 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('statsMemberSelect').addEventListener('change', renderStats);
   document.getElementById('statsPeriod').addEventListener('change', renderStats);
 
-  // 成员卡片：单击进入打卡，长按删除（手机 + 桌面）
-  let longPressTimer = null;
-  let longPressTriggered = false;
-  const LONG_PRESS_MS = 600;
-
-  function clearLongPress() {
-    if (longPressTimer) {
-      clearTimeout(longPressTimer);
-      longPressTimer = null;
-    }
-  }
-
-  document.getElementById('memberGrid').addEventListener('mousedown', function(e) {
-    const card = e.target.closest('.member-card');
-    if (!card) return;
-    const id = card.dataset.memberId;
-    if (!id) return;
-    longPressTriggered = false;
-    longPressTimer = setTimeout(() => {
-      longPressTriggered = true;
-      confirmDeleteMember(id);
-    }, LONG_PRESS_MS);
-  });
-
-  document.addEventListener('mouseup', clearLongPress);
-  document.addEventListener('mouseleave', clearLongPress);
-
-  // 触摸设备
-  document.getElementById('memberGrid').addEventListener('touchstart', function(e) {
-    const card = e.target.closest('.member-card');
-    if (!card) return;
-    const id = card.dataset.memberId;
-    if (!id) return;
-    longPressTriggered = false;
-    longPressTimer = setTimeout(() => {
-      longPressTriggered = true;
-      // 给一个轻微的震动反馈
-      if (navigator.vibrate) navigator.vibrate(20);
-      confirmDeleteMember(id);
-    }, LONG_PRESS_MS);
-  }, { passive: true });
-
-  document.getElementById('memberGrid').addEventListener('touchend', function(e) {
-    clearLongPress();
-    const card = e.target.closest('.member-card');
-    if (!card || longPressTriggered) return;
-    const id = card.dataset.memberId;
-    if (!id) return;
-    enterMember(id);
-  }, { passive: true });
-
-  document.getElementById('memberGrid').addEventListener('touchmove', function(e) {
-    clearLongPress();
-  }, { passive: true });
-
-  // 桌面点击（短按）
+  // 成员卡片：单击进入打卡
   document.getElementById('memberGrid').addEventListener('click', function(e) {
-    if (longPressTriggered) {
-      longPressTriggered = false;
-      return;
-    }
+    // 如果点击的是拖拽手柄，跳过
+    if (e.target.closest('.drag-handle')) return;
     const card = e.target.closest('.member-card');
     if (!card) return;
     const id = card.dataset.memberId;
     if (!id) return;
-    clearLongPress();
     enterMember(id);
   });
+
+  // 初始化成员拖拽排序
+  setupMemberGridReorder(document.getElementById('memberGrid'));
 });
