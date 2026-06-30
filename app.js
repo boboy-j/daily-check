@@ -624,15 +624,95 @@ function goToday() {
 }
 
 /* ===== 任务管理 ===== */
-const TASK_ICONS = ['🌅', '💪', '📖', '🥗', '🏃', '🧘', '🚰', '🛌', '🎯', '✍️', '🧹', '🌱', '🎨', '🎵', '📝', '💻', '🧠', '❤️', '☕', '🎮', '🎬', '🧘', '📷', '🎶', '🎨'];
+const TASK_ICONS = [
+  // 日常 & 作息
+  '🌅', '🌄', '🌞', '💪', '🏃', '🧘', '🛌', '😴', '🌟', '✨',
+  // 饮食
+  '🥗', '🍎', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓', '🥝', '🥑',
+  // 洗漱 & 卫生
+  '🚰', '💦', '🧼', '🧽', '🧴', '🪥', '🪒', '🚿', '🛁', '🫧',
+  // 学习 & 工作
+  '📖', '📝', '✍️', '💻', '🖥️', '📱', '💡', '🎯', '📚', '📋',
+  // 音乐 & 艺术
+  '🎵', '🎶', '🎨', '🎬', '🎮', '🎹', '🎸', '🎺', '🎻', '🥁',
+  // 运动 & 活动
+  '🏋️', '🤸', '🚴', '🏊', '⛹️', '🤾', '🏄', '⛷️', '🏂', '🧗',
+  // 自然
+  '🌱', '🌿', '☘️', '🍀', '🌸', '🌺', '🌻', '🌷', '🌹', '🌳',
+  // 情感
+  '❤️', '💛', '💚', '💙', '💜', '🫶', '🙏', '😊', '🥰', '🔥',
+  // 成就 & 庆祝
+  '🎉', '🎊', '🎈', '🎁', '🏆', '🥇', '🧩', '🚀', '✨', '⭐',
+  // 物品 & 工具
+  '🧹', '🧺', '🏡', '🕯️', '🧰', '🔧', '🪴', '☕', '💧', '📌',
+];
 
 let _editTaskId = null; // 正在编辑的任务 ID
+let _taskFormIcon = TASK_ICONS[0]; // 任务创建表单当前选中的图标（默认显示第一个）
+
+/** 渲染任务创建页的图标选择行（一行 + 更多按钮） */
+function renderTaskIconSelector() {
+  const container = document.getElementById('taskIconSelector');
+  const maxVisible = 8;
+  let html = '';
+  // 显示前 maxVisible 个
+  TASK_ICONS.slice(0, maxVisible).forEach((ic, i) => {
+    const sel = ic === _taskFormIcon ? ' selected' : '';
+    html += `<span class="task-icon-option${sel}" data-icon="${ic}">${ic}</span>`;
+  });
+  // "更多"按钮
+  html += `<button class="task-icon-more-btn" onclick="showIconPicker()" type="button">⋯ 更多</button>`;
+  container.innerHTML = html;
+}
+
+/** 打开图标选择弹窗（显示全部可选图标） */
+function showIconPicker() {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'iconPickerOverlay';
+  overlay.innerHTML = `
+    <div class="modal-box icon-picker-box">
+      <div class="icon-picker-header">
+        <span style="font-size:16px;font-weight:600;">选择图标</span>
+        <button class="icon-picker-close" onclick="closeIconPicker()" type="button">✕</button>
+      </div>
+      <div class="icon-picker-grid">
+        ${TASK_ICONS.map(ic => {
+          const sel = ic === _taskFormIcon ? ' selected' : '';
+          return `<span class="task-icon-option icon-picker-option${sel}" data-icon="${ic}">${ic}</span>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+
+  // 点击选项：选中并关闭
+  overlay.addEventListener('click', function(e) {
+    const opt = e.target.closest('.icon-picker-option');
+    if (!opt) return;
+    const icon = opt.dataset.icon;
+    _taskFormIcon = icon;
+    // 关闭弹窗
+    closeIconPicker();
+    // 刷新主行
+    renderTaskIconSelector();
+  });
+
+  document.body.appendChild(overlay);
+  // 小延迟触发入场动画
+  requestAnimationFrame(() => overlay.classList.add('active'));
+}
+
+function closeIconPicker() {
+  const overlay = document.getElementById('iconPickerOverlay');
+  if (overlay) overlay.remove();
+}
 
 function showTaskManager() {
   document.getElementById('navTitle').textContent = '📋 管理任务';
   showPage('pageTasks');
   state.pageStack.push('pageTasks');
   renderTaskManager();
+  renderTaskIconSelector();
 }
 
 function renderTaskManager() {
@@ -702,8 +782,7 @@ function addTask() {
   const duration = parseInt(durInput.value) || 0;
 
   // 获取选中的图标
-  const selectedIcon = document.querySelector('.task-icon-option.selected');
-  const icon = selectedIcon ? selectedIcon.dataset.icon : '📝';
+  const icon = _taskFormIcon;
 
   // 获取任务类型
   const typeToggle = document.querySelector('.task-type-btn.active');
@@ -1762,6 +1841,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (opt) {
       this.querySelectorAll('.task-icon-option').forEach(el => el.classList.remove('selected'));
       opt.classList.add('selected');
+      _taskFormIcon = opt.dataset.icon;
     }
   });
 

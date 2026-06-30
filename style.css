@@ -769,6 +769,79 @@ html, body {
   border-color: var(--blue);
 }
 
+/* 「更多」按钮 */
+.task-icon-more-btn {
+  flex-shrink: 0;
+  width: auto;
+  height: 38px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 19px;
+  background: var(--bg);
+  color: var(--blue);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  transition: background 0.2s;
+}
+.task-icon-more-btn:active {
+  background: var(--separator-light);
+}
+
+/* 图标选择弹窗 */
+.icon-picker-box {
+  max-height: 70vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+.icon-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 0.5px solid var(--separator);
+  flex-shrink: 0;
+}
+.icon-picker-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bg);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+.icon-picker-close:active {
+  background: var(--separator-light);
+}
+.icon-picker-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 16px 20px 20px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.icon-picker-grid .task-icon-option {
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+}
+.icon-picker-option.selected {
+  background: var(--blue-light);
+  border-color: var(--blue);
+}
+
 /* 添加任务输入行 */
 .add-task-row {
   display: flex;
