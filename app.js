@@ -111,6 +111,9 @@ function showToast(msg) {
 
 /* ===== Tab 切换 ===== */
 function switchTab(pageId) {
+  // 切换标签时退出抖动模式
+  if (_jiggleMode) exitJiggleMode();
+
   const oldPage = document.querySelector('.page.active');
   const newPage = document.getElementById(pageId);
   if (oldPage === newPage) return;
@@ -249,12 +252,12 @@ function renderMembers() {
   }
   empty.style.display = 'none';
 
-  grid.innerHTML = state.members.map((m, idx) => {
+  grid.innerHTML = state.members.map(m => {
     const stats = getMemberTodayStats(m.id);
     const badge = stats.total > 0 ? `${stats.completed}/${stats.total}` : '';
     return `
-      <div class="member-card" draggable="true" data-member-id="${m.id}" data-index="${idx}">
-        <span class="drag-handle" onclick="event.stopPropagation()">⋮⋮</span>
+      <div class="member-card" data-member-id="${m.id}">
+        <button class="member-delete-btn" aria-label="删除">×</button>
         <span class="avatar">${m.avatar || '😊'}</span>
         <div class="name">${escHtml(m.name)}</div>
         ${badge ? `<div class="progress-badge">✅ ${badge}</div>` : ''}
@@ -808,29 +811,113 @@ function setupDragReorder(container) {
   container.addEventListener('dragend', onDragEnd);
 }
 
-/* ===== 成员网格拖拽排序（桌面 + 手机） ===== */
-function setupMemberGridReorder(container) {
+/* ===== 成员网格 - iOS 抖动模式（长按抖动 + 删除 + 拖拽排序） ===== */
+let _jiggleMode = false;
+
+function setupMemberGridJiggle(container) {
+  let longPressTimer = null;
+  let touchStartPos = null;
   let dragEl = null;
-  let dragIndex = -1;
+  let isDragging = false;
 
-  // 用于阻止 click 跳转
-  let _touchDragJustHappened = false;
+  // ===== 触摸事件 =====
+  container.addEventListener('touchstart', (e) => {
+    const card = e.target.closest('.member-card');
+    if (!card) return;
+    // 点击 X 按钮由 click 处理，不启动任何触摸逻辑
+    if (e.target.closest('.member-delete-btn')) return;
 
-  // 桌面 HTML5 Drag（仅从拖拽手柄开始）
-  const onDragStart = (e) => {
-    dragEl = e.target.closest('.member-card');
-    if (!dragEl) return;
-    if (!e.target.closest('.drag-handle')) {
+    if (_jiggleMode) {
+      // 抖动模式中：直接开始拖拽
       e.preventDefault();
+      startDrag(card);
       return;
     }
-    dragIndex = Array.from(container.children).indexOf(dragEl);
+
+    // 正常模式：记录起始位置，准备长按定时器
+    touchStartPos = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+    };
+
+    clearTimeout(longPressTimer);
+    longPressTimer = setTimeout(() => {
+      enterJiggleMode();
+      if (navigator.vibrate) navigator.vibrate(15);
+      // 进入抖动后立即开始拖拽这张卡片
+      startDrag(card);
+    }, 500);
+  }, { passive: false });
+
+  container.addEventListener('touchmove', (e) => {
+    if (isDragging && dragEl) {
+      e.preventDefault();
+      const cy = e.touches[0].clientY;
+      const target = document.elementFromPoint(e.touches[0].clientX, cy);
+      const targetCard = target ? target.closest('.member-card') : null;
+      if (targetCard && targetCard !== dragEl) {
+        const rect = targetCard.getBoundingClientRect();
+        const mid = rect.top + rect.height / 2;
+        if (cy < mid) {
+          container.insertBefore(dragEl, targetCard);
+        } else {
+          container.insertBefore(dragEl, targetCard.nextSibling);
+        }
+      }
+      return;
+    }
+
+    // 手指移动超过 12px 取消长按（允许滚动）
+    if (longPressTimer && touchStartPos) {
+      const dx = Math.abs(e.touches[0].clientX - touchStartPos.x);
+      const dy = Math.abs(e.touches[0].clientY - touchStartPos.y);
+      if (dx > 12 || dy > 12) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+        touchStartPos = null;
+      }
+    }
+  }, { passive: false });
+
+  container.addEventListener('touchend', (e) => {
+    clearTimeout(longPressTimer);
+    longPressTimer = null;
+    touchStartPos = null;
+
+    if (isDragging && dragEl) {
+      endDrag();
+      return;
+    }
+
+    // 抖动模式下点击非卡片区域退出
+    if (_jiggleMode) {
+      const touch = e.changedTouches[0];
+      const target = document.elementFromPoint(touch.clientX, touch.clientY);
+      if (target && !target.closest('.member-card') && !target.closest('.member-delete-btn')) {
+        exitJiggleMode();
+      }
+    }
+  });
+
+  container.addEventListener('touchcancel', () => {
+    clearTimeout(longPressTimer);
+    longPressTimer = null;
+    touchStartPos = null;
+    if (isDragging && dragEl) endDrag();
+  });
+
+  // ===== 桌面端拖拽（仅抖动模式下可用） =====
+  container.addEventListener('dragstart', (e) => {
+    if (!_jiggleMode) { e.preventDefault(); return; }
+    dragEl = e.target.closest('.member-card');
+    if (!dragEl) return;
     dragEl.classList.add('dragging');
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', dragEl.dataset.memberId);
-  };
+  });
 
-  const onDragOver = (e) => {
+  container.addEventListener('dragover', (e) => {
+    if (!_jiggleMode || !dragEl) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
     const target = e.target.closest('.member-card');
@@ -842,14 +929,68 @@ function setupMemberGridReorder(container) {
     } else {
       container.insertBefore(dragEl, target.nextSibling);
     }
-  };
+  });
 
-  const onDragEnd = (e) => {
-    if (dragEl) dragEl.classList.remove('dragging');
-    saveMemberOrderFromDOM();
+  container.addEventListener('dragend', () => {
+    if (dragEl) {
+      dragEl.classList.remove('dragging');
+      saveMemberOrderFromDOM();
+      dragEl = null;
+    }
+  });
+
+  // ===== X 删除按钮点击 =====
+  container.addEventListener('click', (e) => {
+    const btn = e.target.closest('.member-delete-btn');
+    if (!btn) return;
+    if (!_jiggleMode) return;
+    e.stopPropagation();
+    const card = btn.closest('.member-card');
+    if (!card) return;
+    const memberId = card.dataset.memberId;
+    const member = state.members.find(m => m.id === memberId);
+    if (!member) return;
+    showConfirm(
+      '确定要删除 ' + (member.avatar || '') + ' ' + member.name + ' 吗？<br>该成员的所有打卡数据将一并清除。',
+      () => {
+        localStorage.removeItem(memberTasksKey(memberId));
+        localStorage.removeItem(memberRecordsKey(memberId));
+        state.members = state.members.filter(m => m.id !== memberId);
+        saveData();
+        renderMembers();
+        if (state.members.length === 0) {
+          exitJiggleMode();
+        } else {
+          // 重新渲染后恢复抖动状态
+          document.querySelectorAll('.member-card').forEach(c => c.classList.add('jiggling'));
+        }
+        showToast('已删除');
+      }
+    );
+  });
+
+  // 阻止原生上下文菜单
+  container.addEventListener('contextmenu', (e) => {
+    if (e.target.closest('.member-card')) {
+      e.preventDefault();
+    }
+  });
+
+  // ===== 内部辅助 =====
+  function startDrag(card) {
+    dragEl = card;
+    isDragging = true;
+    card.classList.add('dragging');
+  }
+
+  function endDrag() {
+    if (dragEl) {
+      dragEl.classList.remove('dragging');
+      saveMemberOrderFromDOM();
+    }
     dragEl = null;
-    dragIndex = -1;
-  };
+    isDragging = false;
+  }
 
   function saveMemberOrderFromDOM() {
     const items = container.querySelectorAll('.member-card');
@@ -864,97 +1005,31 @@ function setupMemberGridReorder(container) {
       saveData();
     }
   }
+}
 
-  container.addEventListener('dragstart', onDragStart);
-  container.addEventListener('dragover', onDragOver);
-  container.addEventListener('dragend', onDragEnd);
+/** 进入抖动模式（iOS 长按图标效果） */
+function enterJiggleMode() {
+  if (_jiggleMode) return;
+  _jiggleMode = true;
 
-  // ===== 手机触摸拖拽：长按卡片任意位置触发 =====
-  let touchDragEl = null;
-  let touchStartY = 0;
-  let touchStartX = 0;
-  let touchDragActive = false;
-  let touchLongPressTimer = null;
+  // 卡片抖动 + 显示 X 按钮
+  document.querySelectorAll('.member-card').forEach(c => c.classList.add('jiggling'));
 
-  container.addEventListener('touchstart', (e) => {
-    touchDragEl = e.target.closest('.member-card');
-    if (!touchDragEl) return;
-    // 跳过添加按钮
-    if (e.target.closest('.ios-fab') || e.target.closest('#addMemberBtn')) return;
-    touchStartY = e.touches[0].clientY;
-    touchStartX = e.touches[0].clientX;
-    touchDragActive = false;
-    _touchDragJustHappened = false;
-    touchLongPressTimer = setTimeout(() => {
-      touchDragActive = true;
-      touchDragEl.classList.add('dragging');
-      // 阻止浏览器原生上下文菜单
-      e.preventDefault();
-      if (navigator.vibrate) navigator.vibrate(10);
-    }, 300);
-  }, { passive: false });
+  // 导航栏右上角显示"完成"按钮
+  const navRight = document.getElementById('navRight');
+  navRight.innerHTML = '<button class="nav-done-btn" onclick="exitJiggleMode()">完成</button>';
+}
 
-  container.addEventListener('touchmove', (e) => {
-    if (!touchDragEl) {
-      // 手指移动了但还没开始拖拽 -> 判断是否滑动了（滚动）
-      clearTimeout(touchLongPressTimer);
-      return;
-    }
-    // 300ms 内如果手指移动超过 10px，取消长按（可能是滚动）
-    if (!touchDragActive) {
-      const dy = Math.abs(e.touches[0].clientY - touchStartY);
-      const dx = Math.abs(e.touches[0].clientX - touchStartX);
-      if (dy > 10 || dx > 10) {
-        clearTimeout(touchLongPressTimer);
-        touchDragEl = null;
-      }
-      return;
-    }
-    e.preventDefault();
-    const y = e.touches[0].clientY;
-    const target = document.elementFromPoint(e.touches[0].clientX, y);
-    const card = target ? target.closest('.member-card') : null;
-    if (card && card !== touchDragEl) {
-      const rect = card.getBoundingClientRect();
-      const mid = rect.top + rect.height / 2;
-      if (y < mid) {
-        container.insertBefore(touchDragEl, card);
-      } else {
-        container.insertBefore(touchDragEl, card.nextSibling);
-      }
-    }
-  }, { passive: false });
+/** 退出抖动模式 */
+function exitJiggleMode() {
+  if (!_jiggleMode) return;
+  _jiggleMode = false;
 
-  container.addEventListener('touchend', (e) => {
-    clearTimeout(touchLongPressTimer);
-    if (touchDragEl) touchDragEl.classList.remove('dragging');
-    if (touchDragActive && touchDragEl) {
-      saveMemberOrderFromDOM();
-      _touchDragJustHappened = true; // 阻止后续 click 跳转
-      // 阻止 click 事件
-      e.preventDefault();
-    }
-    touchDragEl = null;
-    touchDragActive = false;
-  });
+  // 停止抖动 + 隐藏 X 按钮
+  document.querySelectorAll('.member-card').forEach(c => c.classList.remove('jiggling'));
 
-  container.addEventListener('touchcancel', (e) => {
-    clearTimeout(touchLongPressTimer);
-    if (touchDragEl) touchDragEl.classList.remove('dragging');
-    touchDragEl = null;
-    touchDragActive = false;
-  });
-
-  // 让外部可以读取/重置拖拽标记
-  container._wasTouchDrag = () => _touchDragJustHappened;
-  container._resetTouchDrag = () => { _touchDragJustHappened = false; };
-
-  // 阻止长按上下文菜单
-  container.addEventListener('contextmenu', (e) => {
-    if (e.target.closest('.member-card')) {
-      e.preventDefault();
-    }
-  });
+  // 恢复导航栏
+  document.getElementById('navRight').innerHTML = '';
 }
 
 /* ===== 统计分析 ===== */
@@ -1667,13 +1742,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // 成员卡片：单击进入打卡
   document.getElementById('memberGrid').addEventListener('click', function(e) {
-    // 如果点击的是拖拽手柄，跳过
-    if (e.target.closest('.drag-handle')) return;
-    // 如果刚完成触摸拖拽，跳过（防止拖拽结束后的 click 跳转）
-    if (this._wasTouchDrag && this._wasTouchDrag()) {
-      this._resetTouchDrag();
-      return;
-    }
+    // 抖动模式下不进入详情
+    if (_jiggleMode) return;
+    if (e.target.closest('.member-delete-btn')) return;
     const card = e.target.closest('.member-card');
     if (!card) return;
     const id = card.dataset.memberId;
@@ -1681,6 +1752,6 @@ document.addEventListener('DOMContentLoaded', function() {
     enterMember(id);
   });
 
-  // 初始化成员拖拽排序
-  setupMemberGridReorder(document.getElementById('memberGrid'));
+  // 初始化成员抖动弹窗拖拽排序
+  setupMemberGridJiggle(document.getElementById('memberGrid'));
 });
