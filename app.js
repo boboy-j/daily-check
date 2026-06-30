@@ -257,6 +257,7 @@ function renderMembers() {
     const badge = stats.total > 0 ? `${stats.completed}/${stats.total}` : '';
     return `
       <div class="member-card" data-member-id="${m.id}">
+        <button class="member-edit-btn" onclick="event.stopPropagation();showEditMember('${m.id}')" title="编辑成员">✏️</button>
         <button class="member-delete-btn" aria-label="删除">×</button>
         <span class="avatar">${m.avatar || '😊'}</span>
         <div class="name">${escHtml(m.name)}</div>
@@ -280,19 +281,47 @@ function getMemberTodayStats(memberId) {
 function toggleAvatarExpand() {
   const sel = document.getElementById('avatarSelector');
   const btn = document.getElementById('avatarExpandBtn');
+  const filter = document.getElementById('avatarFilter');
   const expanded = sel.classList.toggle('expanded');
+  btn.classList.toggle('expanded', expanded);
   btn.innerHTML = expanded
     ? '收起 <span class="arrow-down">▼</span>'
     : '查看更多 <span class="arrow-down">▼</span>';
+  // 展开时显示筛选栏，收起时隐藏并重置到"全部"
+  filter.style.display = expanded ? '' : 'none';
+  if (expanded) {
+    // 默认选中"全部"
+    document.querySelectorAll('.avatar-filter-tag').forEach(t => t.classList.toggle('active', t.dataset.category === 'all'));
+    applyAvatarFilter('all');
+  } else {
+    // 收起时重置筛选，显示所有 avatar
+    applyAvatarFilter('all');
+  }
+}
+
+function applyAvatarFilter(category) {
+  const avatars = document.querySelectorAll('.avatar-option');
+  avatars.forEach(el => {
+    if (category === 'all') {
+      el.style.display = '';
+    } else {
+      el.style.display = el.dataset.category === category ? '' : 'none';
+    }
+  });
 }
 
 function showAddMember() {
   document.getElementById('navTitle').textContent = '👤 添加成员';
   document.getElementById('memberNameInput').value = '';
-  // 展开时收起头像，每次都重置
+  // 收起头像选择器并重置筛选
   const sel = document.getElementById('avatarSelector');
+  const filter = document.getElementById('avatarFilter');
+  const btn = document.getElementById('avatarExpandBtn');
   sel.classList.remove('expanded');
-  document.getElementById('avatarExpandBtn').innerHTML = '查看更多 <span class="arrow-down">▼</span>';
+  btn.classList.remove('expanded');
+  btn.innerHTML = '查看更多 <span class="arrow-down">▼</span>';
+  filter.style.display = 'none';
+  applyAvatarFilter('all');
   document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
   document.querySelector('.avatar-option').classList.add('selected');
   showPage('pageAddMember');
@@ -353,10 +382,15 @@ function showEditMember(memberId) {
   state.editingMemberId = memberId;
   document.getElementById('navTitle').textContent = '✏️ 编辑成员';
   document.getElementById('memberNameInput').value = member.name;
-  // Reset avatar selector
+  // Reset avatar selector + filter
   const sel = document.getElementById('avatarSelector');
+  const filter = document.getElementById('avatarFilter');
+  const btn = document.getElementById('avatarExpandBtn');
   sel.classList.remove('expanded');
-  document.getElementById('avatarExpandBtn').innerHTML = '查看更多 <span class="arrow-down">▼</span>';
+  btn.classList.remove('expanded');
+  btn.innerHTML = '查看更多 <span class="arrow-down">▼</span>';
+  filter.style.display = 'none';
+  applyAvatarFilter('all');
   // Select current avatar
   document.querySelectorAll('.avatar-option').forEach(el => {
     el.classList.toggle('selected', el.dataset.avatar === member.avatar);
@@ -376,6 +410,15 @@ document.addEventListener('DOMContentLoaded', function() {
       document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
       opt.classList.add('selected');
     }
+  });
+  // 头像筛选标签点击
+  document.getElementById('avatarFilter').addEventListener('click', function(e) {
+    const tag = e.target.closest('.avatar-filter-tag');
+    if (!tag) return;
+    const category = tag.dataset.category;
+    document.querySelectorAll('.avatar-filter-tag').forEach(t => t.classList.remove('active'));
+    tag.classList.add('active');
+    applyAvatarFilter(category);
   });
 });
 
@@ -826,7 +869,7 @@ function setupMemberGridJiggle(container) {
     const card = e.target.closest('.member-card');
     if (!card) return;
     // 点击 X 按钮由 click 处理，不启动任何触摸逻辑
-    if (e.target.closest('.member-delete-btn')) return;
+    if (e.target.closest('.member-delete-btn') || e.target.closest('.member-edit-btn')) return;
 
     if (_jiggleMode) {
       // 抖动模式中：直接开始拖拽
@@ -1754,7 +1797,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (_jiggleEnteredByTouch) return;
     // 抖动模式下不进入详情
     if (_jiggleMode) return;
-    if (e.target.closest('.member-delete-btn')) return;
+    if (e.target.closest('.member-delete-btn') || e.target.closest('.member-edit-btn')) return;
     const card = e.target.closest('.member-card');
     if (!card) return;
     const id = card.dataset.memberId;
