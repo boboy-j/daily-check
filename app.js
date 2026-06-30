@@ -653,7 +653,7 @@ let _taskFormIcon = TASK_ICONS[0]; // 任务创建表单当前选中的图标（
 /** 渲染任务创建页的图标选择行（一行 + 更多按钮） */
 function renderTaskIconSelector() {
   const container = document.getElementById('taskIconSelector');
-  const maxVisible = 8;
+  const maxVisible = 6;
   let html = '';
   // 显示前 maxVisible 个
   TASK_ICONS.slice(0, maxVisible).forEach((ic, i) => {
@@ -665,16 +665,17 @@ function renderTaskIconSelector() {
   container.innerHTML = html;
 }
 
-/** 打开图标选择弹窗（显示全部可选图标） */
+/** 打开图标选择弹窗（底部面板样式） */
 function showIconPicker() {
   const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
+  overlay.className = 'icon-picker-overlay';
   overlay.id = 'iconPickerOverlay';
   overlay.innerHTML = `
-    <div class="modal-box icon-picker-box">
+    <div class="icon-picker-panel">
+      <div class="icon-picker-handle"></div>
       <div class="icon-picker-header">
-        <span style="font-size:16px;font-weight:600;">选择图标</span>
-        <button class="icon-picker-close" onclick="closeIconPicker()" type="button">✕</button>
+        <span class="icon-picker-title">选择图标</span>
+        <button class="icon-picker-close-btn" type="button">✕</button>
       </div>
       <div class="icon-picker-grid">
         ${TASK_ICONS.map(ic => {
@@ -686,15 +687,20 @@ function showIconPicker() {
   `;
 
   // 点击选项：选中并关闭
-  overlay.addEventListener('click', function(e) {
+  overlay.querySelector('.icon-picker-grid').addEventListener('click', function(e) {
     const opt = e.target.closest('.icon-picker-option');
     if (!opt) return;
-    const icon = opt.dataset.icon;
-    _taskFormIcon = icon;
-    // 关闭弹窗
+    _taskFormIcon = opt.dataset.icon;
     closeIconPicker();
-    // 刷新主行
     renderTaskIconSelector();
+  });
+
+  // 点击关闭按钮
+  overlay.querySelector('.icon-picker-close-btn').addEventListener('click', closeIconPicker);
+
+  // 点击背景半透明区域关闭
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) closeIconPicker();
   });
 
   document.body.appendChild(overlay);
@@ -704,7 +710,11 @@ function showIconPicker() {
 
 function closeIconPicker() {
   const overlay = document.getElementById('iconPickerOverlay');
-  if (overlay) overlay.remove();
+  if (overlay) {
+    overlay.classList.remove('active');
+    // 等过渡动画结束后移除 DOM
+    setTimeout(() => { if (overlay.parentNode) overlay.remove(); }, 200);
+  }
 }
 
 function showTaskManager() {

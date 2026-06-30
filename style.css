@@ -792,54 +792,97 @@ html, body {
   background: var(--separator-light);
 }
 
-/* 图标选择弹窗 */
-.icon-picker-box {
-  max-height: 70vh;
-  overflow: hidden;
+/* 图标选择弹窗（iOS 底部面板） */
+.icon-picker-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 1000;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.icon-picker-overlay.active {
+  opacity: 1;
+}
+.icon-picker-overlay.active .icon-picker-panel {
+  transform: translateY(0);
+}
+
+.icon-picker-panel {
+  width: 100%;
+  max-width: 420px;
+  max-height: 75vh;
+  background: var(--bg-card);
+  border-radius: 16px 16px 0 0;
   display: flex;
   flex-direction: column;
-  padding: 0;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  overflow: hidden;
 }
+
+.icon-picker-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--separator);
+  margin: 8px auto 0;
+  flex-shrink: 0;
+}
+
 .icon-picker-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 0.5px solid var(--separator);
+  padding: 12px 20px 8px;
   flex-shrink: 0;
 }
-.icon-picker-close {
-  width: 32px;
-  height: 32px;
+
+.icon-picker-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.icon-picker-close-btn {
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   border: none;
   background: var(--bg);
-  font-size: 16px;
+  font-size: 14px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--text-secondary);
+  transition: background 0.15s;
 }
-.icon-picker-close:active {
+.icon-picker-close-btn:active {
   background: var(--separator-light);
 }
+
 .icon-picker-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  padding: 16px 20px 20px;
+  gap: 8px;
+  padding: 8px 16px 24px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
 .icon-picker-grid .task-icon-option {
-  width: 40px;
-  height: 40px;
-  font-size: 20px;
+  width: 44px;
+  height: 44px;
+  font-size: 22px;
+  border-radius: 10px;
 }
-.icon-picker-option.selected {
+.icon-picker-grid .task-icon-option.selected {
   background: var(--blue-light);
   border-color: var(--blue);
+  box-shadow: 0 0 0 1px var(--blue);
 }
 
 /* 添加任务输入行 */
