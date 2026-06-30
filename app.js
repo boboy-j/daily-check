@@ -813,11 +813,13 @@ function setupMemberGridReorder(container) {
   let dragEl = null;
   let dragIndex = -1;
 
-  // 桌面 HTML5 Drag
+  // 用于阻止 click 跳转
+  let _touchDragJustHappened = false;
+
+  // 桌面 HTML5 Drag（仅从拖拽手柄开始）
   const onDragStart = (e) => {
     dragEl = e.target.closest('.member-card');
     if (!dragEl) return;
-    // 仅当从拖拽手柄开始才允许
     if (!e.target.closest('.drag-handle')) {
       e.preventDefault();
       return;
@@ -844,6 +846,12 @@ function setupMemberGridReorder(container) {
 
   const onDragEnd = (e) => {
     if (dragEl) dragEl.classList.remove('dragging');
+    saveMemberOrderFromDOM();
+    dragEl = null;
+    dragIndex = -1;
+  };
+
+  function saveMemberOrderFromDOM() {
     const items = container.querySelectorAll('.member-card');
     const newOrder = [];
     items.forEach(el => {
@@ -855,27 +863,28 @@ function setupMemberGridReorder(container) {
       state.members = newOrder;
       saveData();
     }
-    dragEl = null;
-    dragIndex = -1;
-  };
+  }
 
   container.addEventListener('dragstart', onDragStart);
   container.addEventListener('dragover', onDragOver);
   container.addEventListener('dragend', onDragEnd);
 
-  // 手机触摸拖拽
+  // ===== 手机触摸拖拽：长按卡片任意位置触发 =====
   let touchDragEl = null;
   let touchStartY = 0;
+  let touchStartX = 0;
   let touchDragActive = false;
   let touchLongPressTimer = null;
 
   container.addEventListener('touchstart', (e) => {
-    const handle = e.target.closest('.drag-handle');
-    if (!handle) return;
     touchDragEl = e.target.closest('.member-card');
     if (!touchDragEl) return;
+    // 跳过添加按钮
+    if (e.target.closest('.ios-fab') || e.target.closest('#addMemberBtn')) return;
     touchStartY = e.touches[0].clientY;
+    touchStartX = e.touches[0].clientX;
     touchDragActive = false;
+    _touchDragJustHappened = false;
     touchLongPressTimer = setTimeout(() => {
       touchDragActive = true;
       touchDragEl.classList.add('dragging');
@@ -884,7 +893,21 @@ function setupMemberGridReorder(container) {
   }, { passive: true });
 
   container.addEventListener('touchmove', (e) => {
-    if (!touchDragActive || !touchDragEl) return;
+    if (!touchDragEl) {
+      // 手指移动了但还没开始拖拽 -> 判断是否滑动了（滚动）
+      clearTimeout(touchLongPressTimer);
+      return;
+    }
+    // 300ms 内如果手指移动超过 10px，取消长按（可能是滚动）
+    if (!touchDragActive) {
+      const dy = Math.abs(e.touches[0].clientY - touchStartY);
+      const dx = Math.abs(e.touches[0].clientX - touchStartX);
+      if (dy > 10 || dx > 10) {
+        clearTimeout(touchLongPressTimer);
+        touchDragEl = null;
+      }
+      return;
+    }
     e.preventDefault();
     const y = e.touches[0].clientY;
     const target = document.elementFromPoint(e.touches[0].clientX, y);
@@ -904,17 +927,10 @@ function setupMemberGridReorder(container) {
     clearTimeout(touchLongPressTimer);
     if (touchDragEl) touchDragEl.classList.remove('dragging');
     if (touchDragActive && touchDragEl) {
-      const items = container.querySelectorAll('.member-card');
-      const newOrder = [];
-      items.forEach(el => {
-        const id = el.dataset.memberId;
-        const m = state.members.find(m => m.id === id);
-        if (m) newOrder.push(m);
-      });
-      if (newOrder.length === state.members.length) {
-        state.members = newOrder;
-        saveData();
-      }
+      saveMemberOrderFromDOM();
+      _touchDragJustHappened = true; // 阻止后续 click 跳转
+      // 阻止 click 事件
+      e.preventDefault();
     }
     touchDragEl = null;
     touchDragActive = false;
@@ -926,6 +942,10 @@ function setupMemberGridReorder(container) {
     touchDragEl = null;
     touchDragActive = false;
   });
+
+  // 让外部可以读取/重置拖拽标记
+  container._wasTouchDrag = () => _touchDragJustHappened;
+  container._resetTouchDrag = () => { _touchDragJustHappened = false; };
 }
 
 /* ===== 统计分析 ===== */
@@ -1640,6 +1660,11 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('memberGrid').addEventListener('click', function(e) {
     // 如果点击的是拖拽手柄，跳过
     if (e.target.closest('.drag-handle')) return;
+    // 如果刚完成触摸拖拽，跳过（防止拖拽结束后的 click 跳转）
+    if (this._wasTouchDrag && this._wasTouchDrag()) {
+      this._resetTouchDrag();
+      return;
+    }
     const card = e.target.closest('.member-card');
     if (!card) return;
     const id = card.dataset.memberId;
