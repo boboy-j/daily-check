@@ -867,8 +867,9 @@ html, body {
 }
 
 .icon-picker-grid {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, 44px);
+  justify-content: center;
   gap: 8px;
   padding: 8px 16px 24px;
   overflow-y: auto;
