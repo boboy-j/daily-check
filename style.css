@@ -388,6 +388,8 @@ html, body {
   padding: 0 0 1px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.25);
   transition: none;
+  /* 双重保险：非抖动模式下不可交互 */
+  pointer-events: none;
 }
 
 .member-card.jiggling .member-delete-btn {

@@ -813,6 +813,7 @@ function setupDragReorder(container) {
 
 /* ===== 成员网格 - iOS 抖动模式（长按抖动 + 删除 + 拖拽排序） ===== */
 let _jiggleMode = false;
+let _jiggleEnteredByTouch = false; // 由触摸长按进入，抑制后续 click
 
 function setupMemberGridJiggle(container) {
   let longPressTimer = null;
@@ -843,6 +844,7 @@ function setupMemberGridJiggle(container) {
     clearTimeout(longPressTimer);
     longPressTimer = setTimeout(() => {
       enterJiggleMode();
+      _jiggleEnteredByTouch = true;
       if (navigator.vibrate) navigator.vibrate(15);
       // 进入抖动后立即开始拖拽这张卡片
       startDrag(card);
@@ -941,6 +943,11 @@ function setupMemberGridJiggle(container) {
 
   // ===== X 删除按钮点击 =====
   container.addEventListener('click', (e) => {
+    // 刚从长按进入抖动模式，抑制本次 click（X 按钮刚出现，坐标可能误触）
+    if (_jiggleEnteredByTouch) {
+      _jiggleEnteredByTouch = false;
+      return;
+    }
     const btn = e.target.closest('.member-delete-btn');
     if (!btn) return;
     if (!_jiggleMode) return;
@@ -1742,6 +1749,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // 成员卡片：单击进入打卡
   document.getElementById('memberGrid').addEventListener('click', function(e) {
+    // 刚从长按进入抖动模式，抑制本次 click
+    if (_jiggleEnteredByTouch) {
+      _jiggleEnteredByTouch = false;
+      return;
+    }
     // 抖动模式下不进入详情
     if (_jiggleMode) return;
     if (e.target.closest('.member-delete-btn')) return;
