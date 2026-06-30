@@ -310,6 +310,9 @@ html, body {
   transition: all 0.2s ease;
   position: relative;
   user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
 }
 
 .member-card:hover {

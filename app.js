@@ -888,9 +888,11 @@ function setupMemberGridReorder(container) {
     touchLongPressTimer = setTimeout(() => {
       touchDragActive = true;
       touchDragEl.classList.add('dragging');
+      // 阻止浏览器原生上下文菜单
+      e.preventDefault();
       if (navigator.vibrate) navigator.vibrate(10);
     }, 300);
-  }, { passive: true });
+  }, { passive: false });
 
   container.addEventListener('touchmove', (e) => {
     if (!touchDragEl) {
@@ -946,6 +948,13 @@ function setupMemberGridReorder(container) {
   // 让外部可以读取/重置拖拽标记
   container._wasTouchDrag = () => _touchDragJustHappened;
   container._resetTouchDrag = () => { _touchDragJustHappened = false; };
+
+  // 阻止长按上下文菜单
+  container.addEventListener('contextmenu', (e) => {
+    if (e.target.closest('.member-card')) {
+      e.preventDefault();
+    }
+  });
 }
 
 /* ===== 统计分析 ===== */
