@@ -685,7 +685,6 @@ function renderMemberActions(member) {
   if (!member) return '';
   return `
     <div class="member-actions-section">
-      <div class="member-actions-title">👤 ${escHtml(member.name)}</div>
       <div class="member-actions-buttons">
         <button class="btn btn-outline member-action-btn" onclick="showEditMember('${member.id}')">✏️ 编辑成员</button>
         <button class="btn btn-danger member-action-btn" onclick="deleteMemberFromManager('${member.id}')">🗑 删除成员</button>

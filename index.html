@@ -51,24 +51,26 @@
 
       <!-- 页面2: 打卡主页 -->
       <section id="pageDashboard" class="page">
-        <div id="dashboardHeader" class="dashboard-header"></div>
-        <div class="date-nav">
-          <button class="date-arrow" onclick="changeDate(-1)">
-            <svg viewBox="0 0 24 24" width="20" height="20"><path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-          <span id="currentDate"></span>
-          <button class="date-arrow" onclick="changeDate(1)">
-            <svg viewBox="0 0 24 24" width="20" height="20"><path d="M9 18l6-6-6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-          <button id="btnToday" class="btn-today" onclick="goToday()">今天</button>
-        </div>
-        <div class="progress-summary" id="progressSummary"></div>
-        <div class="task-list" id="taskList"></div>
-        <div class="dashboard-actions">
-          <button class="btn btn-outline" onclick="showTaskManager()">
-            <svg viewBox="0 0 24 24" width="16" height="16" style="vertical-align:-2px;margin-right:4px"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2M9 5h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-            管理任务
-          </button>
+        <div class="dashboard-scroll">
+          <div id="dashboardHeader" class="dashboard-header"></div>
+          <div class="date-nav">
+            <button class="date-arrow" onclick="changeDate(-1)">
+              <svg viewBox="0 0 24 24" width="20" height="20"><path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <span id="currentDate"></span>
+            <button class="date-arrow" onclick="changeDate(1)">
+              <svg viewBox="0 0 24 24" width="20" height="20"><path d="M9 18l6-6-6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <button id="btnToday" class="btn-today" onclick="goToday()">今天</button>
+          </div>
+          <div class="progress-summary" id="progressSummary"></div>
+          <div class="task-list" id="taskList"></div>
+          <div class="dashboard-actions">
+            <button class="btn btn-outline" onclick="showTaskManager()">
+              <svg viewBox="0 0 24 24" width="16" height="16" style="vertical-align:-2px;margin-right:4px"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2M9 5h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              管理任务
+            </button>
+          </div>
         </div>
         <div class="member-actions" id="memberActions"></div>
       </section>

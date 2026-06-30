@@ -161,6 +161,25 @@ html, body {
   display: block;
 }
 
+/* 打卡主页 flex 布局：内容滚动，操作按钮固定底部 */
+#pageDashboard.active {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+}
+#pageDashboard .dashboard-scroll {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 16px;
+}
+#pageDashboard .member-actions {
+  padding: 12px 16px;
+  padding-bottom: calc(12px + var(--safe-bottom, 0px));
+  flex-shrink: 0;
+}
+
 /* iOS 模态页面（从底部滑入） */
 .page-modal {
   z-index: 20;
@@ -369,20 +388,10 @@ html, body {
 
 /* ===== 成员操作栏（打卡主界面底部） ===== */
 .member-actions {
-  margin-top: 24px;
-  padding: 16px 0 0;
-  border-top: 0.5px solid var(--separator);
   display: block;
 }
 .member-actions-section {
   width: 100%;
-}
-.member-actions-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin-bottom: 10px;
-  text-align: center;
 }
 .member-actions-buttons {
   display: flex;
