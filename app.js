@@ -457,7 +457,6 @@ function renderDashboard() {
     <span class="avatar">${member.avatar}</span>
     <div class="info">
       <div class="name">${escHtml(member.name)}</div>
-      <button class="member-edit-btn" onclick="event.stopPropagation();showEditMember('${member.id}')" title="编辑成员">✏️</button>
       <div class="sub">${hasWeekly ? '每日打卡 · 周打卡' : '每天进步一点点 ✨'}</div>
     </div>
   `;
@@ -471,6 +470,12 @@ function renderDashboard() {
 
   // 任务列表
   renderTaskList();
+
+  // 成员操作按钮（编辑 / 删除）
+  const actionsContainer = document.getElementById('memberActions');
+  if (actionsContainer) {
+    actionsContainer.innerHTML = renderMemberActions(member);
+  }
 }
 
 function renderTaskList() {
@@ -638,11 +643,6 @@ function renderTaskManager() {
   const container = document.getElementById('taskManagerList');
   if (tasks.length === 0) {
     container.innerHTML = '<div class="empty-state" style="padding:30px 0;"><p style="font-size:14px;">还没有任务，添加一个吧 📝</p></div>';
-    // 即使没有任务也渲染成员操作
-    const actionsContainer = document.getElementById('memberActions');
-    if (actionsContainer) {
-      actionsContainer.innerHTML = renderMemberActions(member);
-    }
     return;
   }
 
@@ -678,15 +678,9 @@ function renderTaskManager() {
 
   // 拖拽排序
   setupDragReorder(container);
-
-  // 成员操作按钮（渲染到独立的 memberActions 容器）
-  const actionsContainer = document.getElementById('memberActions');
-  if (actionsContainer) {
-    actionsContainer.innerHTML = renderMemberActions(member);
-  }
 }
 
-/* 渲染成员操作按钮（任务管理页底部） */
+/* 渲染成员操作按钮（打卡主界面底部） */
 function renderMemberActions(member) {
   if (!member) return '';
   return `
