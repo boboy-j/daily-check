@@ -181,7 +181,7 @@ html, body {
 }
 
 /* iOS 模态页面（从底部滑入） */
-.page-modal {
+.page-modal.active {
   z-index: 20;
   background: var(--bg);
   animation: iosModalIn 0.35s cubic-bezier(0.32, 0.08, 0.24, 1);
