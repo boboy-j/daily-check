@@ -828,8 +828,6 @@ function showEditTask(taskId) {
   overlay.id = 'editTaskOverlay';
   overlay.innerHTML = `
     <div class="modal-box edit-task-modal">
-      <div class="modal-icon">✏️</div>
-      <div class="modal-text" style="font-size:16px;font-weight:600;">编辑任务</div>
 
       <div class="edit-task-field">
         <label>任务图标</label>
