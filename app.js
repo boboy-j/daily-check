@@ -323,7 +323,7 @@ function showAddMember() {
   document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
   document.querySelector('.avatar-option').classList.add('selected');
   showPage('pageAddMember');
-  state.pageStack.push('pageAddMember');
+  // showPage 内部已 push stack，无需重复 push
 }
 
 function saveMember() {
@@ -413,7 +413,7 @@ function showEditMember(memberId) {
     document.querySelector('.avatar-option').classList.add('selected');
   }
   showPage('pageAddMember');
-  state.pageStack.push('pageAddMember');
+  // showPage 内部已 push stack，无需重复 push
 }
 
 /* ===== 头像选择 ===== */
@@ -442,7 +442,7 @@ function enterMember(memberId) {
   state.currentDate = todayStr();
   document.getElementById('navTitle').textContent = '📋 今日打卡';
   showPage('pageDashboard');
-  state.pageStack.push('pageDashboard');
+  // showPage 内部已 push stack，无需重复 push
   renderDashboard();
 }
 
@@ -720,7 +720,7 @@ function closeIconPicker() {
 function showTaskManager() {
   document.getElementById('navTitle').textContent = '📋 管理任务';
   showPage('pageTasks');
-  state.pageStack.push('pageTasks');
+  // showPage 内部已 push stack，无需重复 push
   renderTaskManager();
   renderTaskIconSelector();
 }
