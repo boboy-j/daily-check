@@ -1136,6 +1136,10 @@ html, body {
 .edit-task-modal {
   width: 300px;
   max-width: 88vw;
+  max-height: 75vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 .edit-task-field {
   margin: 10px 0;
